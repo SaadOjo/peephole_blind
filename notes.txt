@@ -1,0 +1,41 @@
+Video Capture Thread
+
+1) Look at the color correction matrix. (not set properly)
+2) Need to implement efficient method to flip bytes.
+2)RT Throttling issue. When processor load is very low. application hangs.
+
+Speaker
+        OUTSPEAKER : Right Channel
+        INSPEAKER  : Left  Channel
+
+Microphone
+
+        INMICROPHONE:  Right Channel
+        OUTMICROPHONE: Left  Channel
+
+
+cleaning memory is a big concern if repeatibility is to be ensured.
+
+
+Note: slots are operated by other threads. (apparently)
+Note: Thread successfully finished message actually corresponds to only when it has been explicitly asked for the thread to be stopped.
+    it does not print when the thread finishes naturally.
+
+Video Thread seek:
+
+Issue with current time.
+
+//Unable to free queue?? (init queue sound)
+
+//Settings: bit rate as setting option.
+
+//choose a codec that supports rgb565 so encoding load is minimal.
+
+//encoded vide playback speed has some issues.
+
+//perhaps player is playing too fast.
+
+
+//Settings Ideas
+
+Select bell sound.
