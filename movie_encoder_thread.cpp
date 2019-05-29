@@ -39,6 +39,10 @@ movie_encoder_thread::~movie_encoder_thread()
 
 void movie_encoder_thread::run(){
 
+    video_ctx->mutex.lock();
+    video_ctx->is_encoding = true; //when only checking audio.
+    video_ctx->mutex.unlock();
+
 
     while(my_sound_queue == NULL) //this has to be before prepare new file for recording frequency.
     {
@@ -79,11 +83,12 @@ void movie_encoder_thread::run(){
 
     while(continue_loop)
     {
-
-        //encode_video_frame();
         //encode_audio_frame();
+        //encode_video_frame();
 
         //have to check here for timing.
+        //QCoreApplication::processEvents(QEventLoop::ExcludeSocketNotifiers,10);
+
         if(av_compare_ts(video_st.next_pts, video_st.enc->time_base,audio_st.next_pts, audio_st.enc->time_base) <= 0)
         {
             encode_video_frame();
@@ -92,7 +97,14 @@ void movie_encoder_thread::run(){
             encode_audio_frame();
         }
 
+
+
     }
+
+    video_ctx->mutex.lock();
+    video_ctx->is_encoding = false;
+    video_ctx->cond.wakeOne(); //in case the video capture thread was already wating for condition.
+    video_ctx->mutex.unlock();
 
     cleanup();
 
@@ -113,8 +125,14 @@ bool movie_encoder_thread::encode_video_frame()
         }
         else if(encode_video)
         {
+            time.start();
+            //encode_audio_frame();
+            fprintf(stderr, "Frame encode video start.. \n");
             //encode_video = !write_video_frame(oc, &video_st,NULL);
             encode_video = !write_video_frame(oc, &video_st,video_ctx->data);
+            fprintf(stderr, "Frame encode video end. Tome taken for encoding frame: %0.3f seconds. \n", ((float)time.elapsed())/1000.0);
+            video_ctx->cond.wakeOne();
+
             ret = true;
         }
         //qDebug("exiting encode_video_slot.");
@@ -132,7 +150,7 @@ bool movie_encoder_thread::get_from_queue(safe_queue *queue, unsigned char *fram
     queue->lock.lock();
     if(queue->queue_size == 0)
     {
-        fprintf(stderr,"Waiting for data to be filled...\n");
+        //fprintf(stderr,"Waiting for data to be filled...\n");
         //queue->filled_cond.wait(&queue->lock); //might have issues
         ret =  false;
     }
@@ -145,7 +163,7 @@ bool movie_encoder_thread::get_from_queue(safe_queue *queue, unsigned char *fram
         queue->tail++;
         queue->tail = queue->tail%queue_size;
         queue->queue_size--;
-        queue->emptied_cond.wakeOne();
+        //queue->emptied_cond.wakeOne();
         ret = true;
     }
     queue->lock.unlock();
@@ -168,8 +186,11 @@ bool movie_encoder_thread::encode_audio_frame()
         {
             if(get_from_queue(my_sound_queue, sound_encode_buffer, nb_samples))
             {
-                encode_audio = !write_audio_frame(oc, &audio_st,sound_encode_buffer);
+                time.start();
+                fprintf(stderr, "Frame encode audio start.. \n");
                 qDebug("encoding audio frame.");
+                encode_audio = !write_audio_frame(oc, &audio_st,sound_encode_buffer);
+                fprintf(stderr, "Frame encode audio end. Time taken for encoding frame: %0.3f seconds. \n", ((float)time.elapsed())/1000.0);
 
                 ret = true;
             }
@@ -226,6 +247,17 @@ void movie_encoder_thread::prepare_new_video_file(char * fname)
         goto end;
 
     }
+    oc->oformat->audio_codec = AV_CODEC_ID_AC3;
+
+    fprintf(stderr,"the audio codec is : %d. \n",oc->oformat->audio_codec);
+
+   /*
+    while(1)
+    {
+
+    }
+    */
+
     fmt = oc->oformat;
 
     // Add the audio and video streams using the default format codecs
@@ -282,10 +314,10 @@ bool movie_encoder_thread::cleanup()
     if (have_video)
         close_stream(oc, &video_st);
 
-    //if (have_audio)
-    //{
-    //    close_stream(oc, &audio_st);
-    //}
+    if (have_audio)
+    {
+        close_stream(oc, &audio_st);
+    }
 
     if (!(fmt->flags & AVFMT_NOFILE))
     {
@@ -326,8 +358,8 @@ void movie_encoder_thread::add_stream(OutputStream *ost, AVFormatContext *oc, AV
     switch ((*codec)->type)
     {
     case AVMEDIA_TYPE_AUDIO:
-        c->sample_fmt  = (*codec)->sample_fmts ? (*codec)->sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
-        c->bit_rate    = 64000;
+        c->sample_fmt  = (*codec)->sample_fmts ? (*codec)->sample_fmts[0] : AV_SAMPLE_FMT_S16; //AV_SAMPLE_FMT_FLTP;
+        c->bit_rate    = 400000; //increqsed q lot
         c->sample_rate = recording_frequency;
 
         //c->sample_rate = 44100;
@@ -473,6 +505,8 @@ void movie_encoder_thread::open_audio(AVFormatContext *oc, AVCodec *codec, Outpu
     }
 
     fprintf(stderr, "number of samples are: %d\n", nb_samples);
+
+
     //for this format the number of samples seem to be 1024
 
     ost->frame     = alloc_audio_frame(c->sample_fmt, c->channel_layout,c->sample_rate, nb_samples);

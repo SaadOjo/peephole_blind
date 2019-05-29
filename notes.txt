@@ -31,11 +31,20 @@ Issue with current time.
 
 //choose a codec that supports rgb565 so encoding load is minimal.
 
-//encoded vide playback speed has some issues.
+//encoded video playback speed has some issues.
 
-//perhaps player is playing too fast.
+//perhaps player is playing too fast. (maybe not, just recording was skipping frames)
 
 
 //Settings Ideas
 
 Select bell sound.
+
+Stuff to implement.
+*******************
+
+Add date and duration to recordings database. (later other stuff as well. like malicious entry or not.)
+
+Improvements
+******************
+Make the video recording variable frame rate.

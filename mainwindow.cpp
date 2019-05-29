@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     my_safe_encode_video_context.mutex.lock();
     my_safe_encode_video_context.put_data = false;
+    my_safe_encode_video_context.is_encoding = false;
     my_safe_encode_video_context.mutex.unlock();
 
     my_safe_encode_audio_context.mutex.lock();
@@ -24,7 +25,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //my_bell_thread          = new bell_thread(this, &my_program_state);
-
     //my_gpio_event_detector_thread  = new gpio_event_detector_thread(this, BELL_PIN);
     //my_gpio_event_detector_thread->startThread();
     //connect(my_gpio_event_detector_thread, SIGNAL(rising_edge()), this, SLOT(ring_bell_slot()));
@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
     my_video_capture_thread = new video_capture_thread(this, &my_safe_encode_video_context);
     my_movie_encoder_thread = new movie_encoder_thread(this, &my_safe_encode_video_context, &my_safe_encode_audio_context, &my_program_state);
 
-    connect(my_video_capture_thread, SIGNAL(renderedImage(image_with_mutex *)), ui->videoPane, SLOT(setPicture(image_with_mutex *)));
+    connect(my_video_capture_thread, SIGNAL(renderedImage(image_with_mutex *)), ui->videoPane, SLOT(setPicture(image_with_mutex *)),Qt::DirectConnection); //just made direct. (has solved the issue.)
 
     connect(my_audio_capture_thread,SIGNAL(audio_capture_started_signal(start_context*)),&my_audio_playback_thread,SLOT(act_on_audio_thread_start(start_context*)));
     connect(my_audio_capture_thread,SIGNAL(audio_capture_stopped_signal()),&my_audio_playback_thread,SLOT(act_on_audio_thread_stop()));
@@ -57,9 +57,9 @@ void MainWindow::on_record_or_stop_btn_clicked()
     {
         record_or_stop_btn_state = false;
         ui->record_or_stop_btn->setText("Stop");
+        my_movie_encoder_thread->startThread();
         my_video_capture_thread->startThread();
         my_audio_capture_thread->startThread();
-        my_movie_encoder_thread->startThread();
 
     }//record
     else

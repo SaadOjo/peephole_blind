@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QCoreApplication> //for process events
 #include <QTime>
 
 #include <stdio.h>

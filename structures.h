@@ -36,6 +36,7 @@ struct safe_encode_video_context
     QMutex        mutex;
     unsigned char *data;
     bool          put_data;
+    bool          is_encoding;
     QWaitCondition cond;
 };
 

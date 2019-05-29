@@ -29,11 +29,13 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
 
     pseudo_camera_driver my_driver; //manually set the camera.
     my_driver.load_settings_from_file();
-   /*
+/*
     my_driver.write_register(0x12,0x14); //resoloution and rgb mode
     my_driver.write_register(0x3D,0x92);
     my_driver.write_register(0x40,0xD0); //RGB565
     my_driver.read_register(0x40); //just set the last bit
+
+
     // Setting the color matrix
     //                       reg   val
     my_driver.write_register(0x4F,0x40); //MT1 R
@@ -48,8 +50,8 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
     my_driver.write_register(0x58,0b01110111); //MTXS (9:2)
     unsigned char reg_mtxs = my_driver.read_register(0x69); //just set the last bit
     my_driver.write_register(0x69,reg_mtxs&0xFE|0x00);
-
 */
+
     //my_driver.write_register(0x41,0x00);
 
     //while(1);
@@ -150,7 +152,7 @@ void video_capture_thread::run(){
 
     while(continue_loop)
     {
-        qDebug("video capture thread running.");
+
 
         frame_counter++;
 
@@ -158,13 +160,18 @@ void video_capture_thread::run(){
         //qDebug("frame%10: %d \n",frame_counter%10);
         //qDebug("frame%1: %d \n",frame_counter%1);
 
+
+        my_safe_encode_video_context->mutex.lock();
+        myIWM->mutex.lock();
+
+        qDebug("video capture thread running.");
+
         if(frame_counter%FPS_AVG_OVER == 0)
         {
            qDebug("Frame Rate: %0.1f\n",FPS_AVG_OVER*1000.0/time->elapsed());
             time->start();
         }
-        my_safe_encode_video_context->mutex.lock();
-        myIWM->mutex.lock();
+
 
             do {
                     FD_ZERO(&fds);
@@ -207,14 +214,21 @@ void video_capture_thread::run(){
             }
             */
 
-
             //rgb_image_buffer = image_buffer; //just testing
             memcpy(encoder_buffer,image_buffer,fmt.fmt.pix.sizeimage);
 
         my_safe_encode_video_context->put_data = true;
 
+        //if encoding
+        if(my_safe_encode_video_context->is_encoding)
+        {
+            my_safe_encode_video_context->cond.wait(&my_safe_encode_video_context->mutex);
+        }
+
         myIWM->mutex.unlock(); //use wait condition
         my_safe_encode_video_context->mutex.unlock();
+
+        //qApp->processEvents(); something that can be useful.
 
         emit renderedImage(myIWM);
         //my_pxp.cc_frame_end();

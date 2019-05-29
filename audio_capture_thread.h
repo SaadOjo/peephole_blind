@@ -14,6 +14,7 @@
 
 #include "structures.h"
 
+#define AUDIO_SAMPLES_IN_QUEUE   1536
 #define RECORDING_FREQUENCY      8000 //44100  //or 8000
 #define AUDIO_CAPTURE_QUEUE_SIZE 24
 

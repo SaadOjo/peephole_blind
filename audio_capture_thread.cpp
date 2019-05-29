@@ -13,7 +13,9 @@ audio_capture_thread::audio_capture_thread(QObject *parent, safe_encode_audio_co
     }
 
     periods = 2;
-    buffer_frames = (4096*periods)>>2;
+    //buffer_frames = (4096*periods)>>2;
+    buffer_frames = (AUDIO_SAMPLES_IN_QUEUE*4*periods)>>2;
+
 
     //fprintf(stderr ,"The requested frame size is: %d\n",buffer_frames);
     //frequency = 44100;

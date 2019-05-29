@@ -2,8 +2,10 @@
 #define MOVIE_ENCODER_THREAD_H
 
 #include <QThread>
+#include <QCoreApplication> //for process events function
 #include <QMutex>
 #include <QDebug>
+#include <QTime> //to determine encoder performance.
 
 #include "structures.h"
 #include "program_state.h"
@@ -117,6 +119,8 @@ private:
     int encode_video, encode_audio;
     AVDictionary *opt;
     int i;
+
+    QTime time;
 };
 
 
