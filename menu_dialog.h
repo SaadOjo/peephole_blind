@@ -6,6 +6,7 @@
 
 #include "program_state.h"
 #include "gallery_dialog.h"
+#include "settings_dialog.h"
 
 namespace Ui {
 class menu_dialog;

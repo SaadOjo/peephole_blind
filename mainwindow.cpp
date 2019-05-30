@@ -42,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     my_program_state.video_player_settings_state.recording_filename = "empty";
 
+    my_video_capture_thread->startThread();// this will basically always be on on this menu.
+
     record_or_stop_btn_state = true;
     ui->record_or_stop_btn->setText("Record");
 }
@@ -58,8 +60,9 @@ void MainWindow::on_record_or_stop_btn_clicked()
         record_or_stop_btn_state = false;
         ui->record_or_stop_btn->setText("Stop");
         my_movie_encoder_thread->startThread();
-        my_video_capture_thread->startThread();
-        my_audio_capture_thread->startThread();
+        //my_video_capture_thread->startThread();
+        my_audio_capture_thread->startThread(ENCODER_QUEUE);
+        //can also have a method that turns on queues while encoder is running. (can be useful for hear and talk.)
 
     }//record
     else
@@ -67,7 +70,7 @@ void MainWindow::on_record_or_stop_btn_clicked()
         record_or_stop_btn_state = true;
         ui->record_or_stop_btn->setText("Record");
         my_movie_encoder_thread->stopThread();
-        my_video_capture_thread->stopThread();
+        //my_video_capture_thread->stopThread();
         my_audio_capture_thread->stopThread();
     }
 }
@@ -85,7 +88,7 @@ void MainWindow::on_menu_btn_clicked()
     mnu_dlg.exec();
     qDebug() << "Returning from menu dialog!";
     my_video_capture_thread->startThread();
-    my_audio_capture_thread->startThread();
+    my_audio_capture_thread->startThread(PLAYBACK_AND_ENCODER_QUEUES); //depends on previous state
 
 }
 void MainWindow::ring_bell_slot()
@@ -112,4 +115,25 @@ void MainWindow::ring_bell_slot()
         my_audio_playback_thread.startThread();
     }
     */
+}
+
+void MainWindow::on_talk_btn_pressed()
+{
+    //check if encoder is not running and stuff. code below is just for testing,
+    my_audio_capture_thread->startThread(PLAYBACK_QUEUE);
+}
+
+void MainWindow::on_talk_btn_released()
+{
+    my_audio_capture_thread->stopThread();
+}
+
+void MainWindow::on_hear_btn_pressed()
+{
+    my_audio_capture_thread->startThread(LISTEN_PLAYBACK_QUEUE);
+}
+
+void MainWindow::on_hear_btn_released()
+{
+    my_audio_capture_thread->stopThread();
 }

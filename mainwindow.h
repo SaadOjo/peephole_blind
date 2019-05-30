@@ -39,6 +39,14 @@ private slots:
 
     void ring_bell_slot();
 
+    void on_talk_btn_pressed();
+
+    void on_talk_btn_released();
+
+    void on_hear_btn_pressed();
+
+    void on_hear_btn_released();
+
 private:
     Ui::MainWindow *ui;
 

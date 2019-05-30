@@ -18,6 +18,12 @@
 #define RECORDING_FREQUENCY      8000 //44100  //or 8000
 #define AUDIO_CAPTURE_QUEUE_SIZE 24
 
+enum audio_capture_type
+{PLAYBACK_QUEUE,
+ LISTEN_PLAYBACK_QUEUE,
+ ENCODER_QUEUE,
+ PLAYBACK_AND_ENCODER_QUEUES};
+
 //Check buffer sizes
 
 class audio_capture_thread : public QThread
@@ -28,7 +34,7 @@ public:
     audio_capture_thread(QObject *parent = 0, safe_encode_audio_context* acontext = NULL);
     ~audio_capture_thread();
     void stopThread();
-    void startThread();
+    void startThread(enum audio_capture_type capture_type);
     void flush_playback_queue();
     safe_queue *myQueue,*myEncoderQueue;
     safe_encode_audio_context *my_safe_encode_audio_context;
@@ -52,6 +58,11 @@ private:
     snd_pcm_uframes_t periodsize;
     snd_pcm_t *pcm_handle;
     void init();
+
+    bool store_in_encoder_queue;
+    bool store_in_playback_queue;
+
+    bool only_listen;
 
     void init_queue(safe_queue *queue);
     void put_in_queue(safe_queue *queue, unsigned char *frame);

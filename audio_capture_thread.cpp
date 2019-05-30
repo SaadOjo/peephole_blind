@@ -40,6 +40,11 @@ audio_capture_thread::audio_capture_thread(QObject *parent, safe_encode_audio_co
     myEncoderQueue->queue_size = 0;
     myEncoderQueue->lock.unlock();
 
+
+    store_in_encoder_queue = false; //not really needed i suppose at they will certainly be overwritten.
+    store_in_playback_queue = false;
+
+    only_listen = false;
 }
 
 audio_capture_thread::~audio_capture_thread()
@@ -126,7 +131,10 @@ void audio_capture_thread::run(){
     audio_start_context.queue_size = AUDIO_CAPTURE_QUEUE_SIZE;
     audio_start_context.mutex.unlock();
 
-    emit audio_capture_started_signal(&audio_start_context);
+    if(store_in_playback_queue)
+    {
+        emit audio_capture_started_signal(&audio_start_context);
+    }
 
     while(continue_loop)
     {
@@ -139,10 +147,24 @@ void audio_capture_thread::run(){
           fprintf(stderr, "<<<<<<<<<<<<<<< Buffer Overrun >>>>>>>>>>>>>>>\n");
         }
 
-        put_in_queue(myQueue,frame); //already safe
+        if(store_in_playback_queue)
+        {
+            if(only_listen)
+            {
+                for(int i = 0; i<periodsize>>2; i++)
+                {
+                    frame[i*4]     = 0; //for left or right not sure. will check.
+                    frame[i*4 + 1] = 0;
+                }
+            }
 
-        memcpy(encoderFrame,frame,periodsize);
-        put_in_queue(myEncoderQueue,encoderFrame); //already safe
+            put_in_queue(myQueue,frame); //already safe
+        }
+        if(store_in_encoder_queue)
+        {
+            memcpy(encoderFrame,frame,periodsize);
+            put_in_queue(myEncoderQueue,encoderFrame); //already safe
+        }
 
         //qDebug("Period size is: %d \n",periodsize);
     }
@@ -150,7 +172,10 @@ void audio_capture_thread::run(){
     init_queue(myQueue);
     init_queue(myEncoderQueue);
 
-    emit audio_capture_stopped_signal();
+    if(store_in_playback_queue)
+    {
+        emit audio_capture_stopped_signal();
+    }
 
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);
@@ -249,8 +274,33 @@ void audio_capture_thread::stopThread()
     qDebug("The audio thread has successfully finished");
 }
 
-void audio_capture_thread::startThread()
+void audio_capture_thread::startThread(enum audio_capture_type capture_type)
 {
+    //fprintf(stderr, "audio_capture_type %d. \n", capture_type);
+    //while(1);
+    switch(capture_type)
+    {
+    case PLAYBACK_QUEUE:
+        only_listen = false;
+        store_in_playback_queue = true;  //thread safe??
+        store_in_encoder_queue  = false;
+        break;
+    case LISTEN_PLAYBACK_QUEUE:
+        only_listen = true;
+        store_in_playback_queue = true;  //thread safe??
+        store_in_encoder_queue  = false;
+        break;
+    case ENCODER_QUEUE:
+        store_in_playback_queue = false;
+        store_in_encoder_queue  = true;
+        break;
+    case PLAYBACK_AND_ENCODER_QUEUES:
+        only_listen = false;
+        store_in_playback_queue = true;
+        store_in_encoder_queue  = true;
+        break;
+    }
+
     qDebug()<<"The audio thread is starting!";
     continue_loop = true;
     this->start();
@@ -279,6 +329,3 @@ else
     my_safe_encode_audio_context.mutex.unlock(); //more like a wait condition here just to make sure all data is freed,
 }
 */
-
-
-

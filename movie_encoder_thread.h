@@ -11,7 +11,7 @@
 #include "program_state.h"
 
 
-#define STREAM_FRAME_RATE 10 /* 9 images/s */
+#define STREAM_FRAME_RATE 7.3 /* 9 images/s */
 #define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 //#define STREAM_PIX_FMT    AV_PIX_FMT_RGB565BE /* default pix_fmt */
 

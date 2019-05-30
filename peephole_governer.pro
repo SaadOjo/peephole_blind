@@ -36,7 +36,8 @@ SOURCES += main.cpp\
     audio_capture_thread.cpp \
     movie_encoder_thread.cpp \
     gpio_event_detector_thread.cpp \
-    bell_thread.cpp
+    bell_thread.cpp \
+    settings_dialog.cpp
 
 HEADERS  += mainwindow.h \
     videopane.h \
@@ -53,12 +54,14 @@ HEADERS  += mainwindow.h \
     audio_capture_thread.h \
     movie_encoder_thread.h \
     gpio_event_detector_thread.h \
-    bell_thread.h
+    bell_thread.h \
+    settings_dialog.h
 
 FORMS    += mainwindow.ui \
     menu_dialog.ui \
     gallery_dialog.ui \
-    player_dialog.ui
+    player_dialog.ui \
+    settings_dialog.ui
 
 OTHER_FILES += \
     notes.txt

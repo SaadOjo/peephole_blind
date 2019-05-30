@@ -123,7 +123,7 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
 
     xioctl(fd, VIDIOC_STREAMON, &type);
 
-    image_buffer =  (unsigned char*) buffers[buf.index].start;
+    image_buffer =  (unsigned char*) buffers[buf.index].start; //problem found.
     //QImage otherImage(image_buffer, FRAME_WIDTH, FRAME_HEIGHT, QImage::Format_RGB888);
 
     rgb_image_buffer =(unsigned char*)malloc(320*240*2);
@@ -132,7 +132,7 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
     encoder_buffer =(unsigned char*)malloc(320*240*2);
     //memset(rgb_image_buffer, 200, 320*240*2);
 
-    image = new QImage((unsigned char*) image_buffer, FRAME_WIDTH, FRAME_HEIGHT, QImage::Format_RGB16);
+    image = new QImage((unsigned char*) rgb_image_buffer, FRAME_WIDTH, FRAME_HEIGHT, QImage::Format_RGB16);
 
     myIWM->mutex.lock(); //use wait condition
     myIWM->image = image;//new QImage();
@@ -147,6 +147,8 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
 }
 
 void video_capture_thread::run(){
+
+    QTime time2;
 
     time->start();
 
@@ -193,11 +195,29 @@ void video_capture_thread::run(){
             buf.memory = V4L2_MEMORY_MMAP;
             xioctl(fd, VIDIOC_DQBUF, &buf); //uncommented (this might have been the issue)
 
-            image_buffer = (unsigned char*)buffers[buf.index].start;
+            image_buffer = (unsigned char*)buffers[buf.index].start; //useless if image_buffer is used as data for QImage. must be same actual memory location.
+
+            //convert the image here.
+
+
+            //time2.start();
+            //rgb_image_buffer = convert from yuv422 to rgb565le
+            unsigned char pix, lb, hb;
+            for(int i = 0; i<fmt.fmt.pix.sizeimage/2; i++)
+            {
+                pix = image_buffer[i*2];
+
+                *(rgb_image_buffer + i*2)     = pix<<3&0xe0|pix>>3;
+                *(rgb_image_buffer + i*2 + 1) = pix&0xf8|pix>>5;
+
+            }
+            //fprintf(stderr, "time taken for the conversion is: %0.3f \n",(float)time2.elapsed()/1000.0);
+
+            //image_buffer = rgb_image_buffer;
 
             //my_pxp.cc_frame_start(image_buffer, fmt.fmt.pix.sizeimage);
             //fprintf(stderr,"The size of the image is :%d. \n", fmt.fmt.pix.sizeimage);
-            /*
+              /*
             unsigned char pix ,lb, ub;
             for(int i = 0; i< 320*240;i++)
             {
@@ -213,6 +233,7 @@ void video_capture_thread::run(){
                 *(rgb_image_buffer + i*2)     = *(image_buffer + i*2 + 1);
             }
             */
+
 
             //rgb_image_buffer = image_buffer; //just testing
             memcpy(encoder_buffer,image_buffer,fmt.fmt.pix.sizeimage);
