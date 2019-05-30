@@ -153,8 +153,8 @@ void audio_capture_thread::run(){
             {
                 for(int i = 0; i<periodsize>>2; i++)
                 {
-                    frame[i*4]     = 0; //for left or right not sure. will check.
-                    frame[i*4 + 1] = 0;
+                    frame[i*4 + 2] = 0; //for left or right not sure. will check.
+                    frame[i*4 + 3] = 0;
                 }
             }
 

@@ -59,6 +59,7 @@ void MainWindow::on_record_or_stop_btn_clicked()
     {
         record_or_stop_btn_state = false;
         ui->record_or_stop_btn->setText("Stop");
+        my_video_capture_thread->set_camera_color_space(YUV422);
         my_movie_encoder_thread->startThread();
         //my_video_capture_thread->startThread();
         my_audio_capture_thread->startThread(ENCODER_QUEUE);
@@ -70,6 +71,7 @@ void MainWindow::on_record_or_stop_btn_clicked()
         record_or_stop_btn_state = true;
         ui->record_or_stop_btn->setText("Record");
         my_movie_encoder_thread->stopThread();
+        my_video_capture_thread->set_camera_color_space(RGB16);
         //my_video_capture_thread->stopThread();
         my_audio_capture_thread->stopThread();
     }
@@ -81,14 +83,14 @@ void MainWindow::on_menu_btn_clicked()
     //what happends if the encoder is running?
 
     my_video_capture_thread->stopThread();
-    my_audio_capture_thread->stopThread();
+    //my_audio_capture_thread->stopThread();
 
     menu_dialog mnu_dlg(this,&my_program_state);
     mnu_dlg.setWindowState(Qt::WindowFullScreen);
     mnu_dlg.exec();
     qDebug() << "Returning from menu dialog!";
     my_video_capture_thread->startThread();
-    my_audio_capture_thread->startThread(PLAYBACK_AND_ENCODER_QUEUES); //depends on previous state
+    //my_audio_capture_thread->startThread(PLAYBACK_AND_ENCODER_QUEUES); //depends on previous state
 
 }
 void MainWindow::ring_bell_slot()
@@ -120,6 +122,10 @@ void MainWindow::ring_bell_slot()
 void MainWindow::on_talk_btn_pressed()
 {
     //check if encoder is not running and stuff. code below is just for testing,
+
+    //if encoder is running,
+    //make a function in audio capture thread which changes modes while running and calls appropriate signals.
+    //then just switch mode with both playback and encoder queues running.
     my_audio_capture_thread->startThread(PLAYBACK_QUEUE);
 }
 

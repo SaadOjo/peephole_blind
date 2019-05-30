@@ -28,6 +28,12 @@
 #define FRAME_HEIGHT 240
 #define FPS_AVG_OVER 10
 
+enum color_space
+{
+    YUV422,
+    RGB16
+};
+
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
@@ -41,7 +47,8 @@ public:
     ~video_capture_thread();
 
     void stopThread();
-    void startThread();    
+    void startThread();
+    void set_camera_color_space(enum color_space cspace);
 
     image_with_mutex *myIWM;
 
@@ -81,6 +88,9 @@ private:
     bool                            continue_loop;
     QTime                           *time;
     unsigned long int               frame_counter;
+
+
+    enum color_space    current_color_space;
 
 };
 
