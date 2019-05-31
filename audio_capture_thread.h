@@ -19,10 +19,14 @@
 #define AUDIO_CAPTURE_QUEUE_SIZE 24
 
 enum audio_capture_type
-{PLAYBACK_QUEUE,
+{
+ PLAYBACK_QUEUE,
  LISTEN_PLAYBACK_QUEUE,
  ENCODER_QUEUE,
- PLAYBACK_AND_ENCODER_QUEUES};
+ LISTEN_PLAYBACK_AND_ENCODER_QUEUES,
+ PLAYBACK_AND_ENCODER_QUEUES,
+ PLAYBACK_QUEUE_OFF
+};
 
 //Check buffer sizes
 
@@ -35,6 +39,7 @@ public:
     ~audio_capture_thread();
     void stopThread();
     void startThread(enum audio_capture_type capture_type);
+    void change_capture_type(enum audio_capture_type capture_type);
     void flush_playback_queue();
     safe_queue *myQueue,*myEncoderQueue;
     safe_encode_audio_context *my_safe_encode_audio_context;

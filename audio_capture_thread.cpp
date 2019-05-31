@@ -267,6 +267,35 @@ end:
 
 }
 
+void audio_capture_thread::change_capture_type(enum audio_capture_type capture_type)
+{
+    if(this->isRunning())
+    {
+        switch(capture_type)
+        {
+            case LISTEN_PLAYBACK_AND_ENCODER_QUEUES:
+            only_listen = true;
+            store_in_playback_queue = true;
+            store_in_encoder_queue  = true;
+            emit audio_capture_started_signal(&audio_start_context);
+            break;
+            case PLAYBACK_AND_ENCODER_QUEUES:
+            only_listen = false;
+            store_in_playback_queue = true;
+            store_in_encoder_queue  = true;
+            emit audio_capture_started_signal(&audio_start_context);
+            break;
+            case PLAYBACK_QUEUE_OFF:
+            store_in_playback_queue = false;
+            emit audio_capture_stopped_signal();
+            break;
+            default:
+            break;
+
+        }
+    }
+}
+
 void audio_capture_thread::stopThread()
 {
     continue_loop = false; // allow the run command finish by ending while
@@ -287,11 +316,16 @@ void audio_capture_thread::startThread(enum audio_capture_type capture_type)
         break;
     case LISTEN_PLAYBACK_QUEUE:
         only_listen = true;
-        store_in_playback_queue = true;  //thread safe??
+        store_in_playback_queue = true;
         store_in_encoder_queue  = false;
         break;
     case ENCODER_QUEUE:
         store_in_playback_queue = false;
+        store_in_encoder_queue  = true;
+        break;
+    case LISTEN_PLAYBACK_AND_ENCODER_QUEUES:
+        only_listen = true;
+        store_in_playback_queue = true;
         store_in_encoder_queue  = true;
         break;
     case PLAYBACK_AND_ENCODER_QUEUES:

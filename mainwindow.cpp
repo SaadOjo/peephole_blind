@@ -126,20 +126,49 @@ void MainWindow::on_talk_btn_pressed()
     //if encoder is running,
     //make a function in audio capture thread which changes modes while running and calls appropriate signals.
     //then just switch mode with both playback and encoder queues running.
-    my_audio_capture_thread->startThread(PLAYBACK_QUEUE);
+
+    if(my_movie_encoder_thread->isRunning() && my_audio_capture_thread->isRunning())
+    {
+       my_audio_capture_thread->change_capture_type(PLAYBACK_AND_ENCODER_QUEUES);
+    }
+    else
+    {
+        my_audio_capture_thread->startThread(PLAYBACK_QUEUE);
+    }
 }
 
 void MainWindow::on_talk_btn_released()
 {
-    my_audio_capture_thread->stopThread();
+    if(my_movie_encoder_thread->isRunning() && my_audio_capture_thread->isRunning()) //bit stupid here.
+    {
+       my_audio_capture_thread->change_capture_type(PLAYBACK_QUEUE_OFF);
+    }
+    else
+    {
+        my_audio_capture_thread->stopThread();
+    }
 }
 
 void MainWindow::on_hear_btn_pressed()
 {
-    my_audio_capture_thread->startThread(LISTEN_PLAYBACK_QUEUE);
+    if(my_movie_encoder_thread->isRunning() && my_audio_capture_thread->isRunning())
+    {
+       my_audio_capture_thread->change_capture_type(LISTEN_PLAYBACK_AND_ENCODER_QUEUES);
+    }
+    else
+    {
+        my_audio_capture_thread->startThread(LISTEN_PLAYBACK_QUEUE);
+    }
 }
 
 void MainWindow::on_hear_btn_released()
 {
-    my_audio_capture_thread->stopThread();
+    if(my_movie_encoder_thread->isRunning() && my_audio_capture_thread->isRunning()) //bit stupid here.
+    {
+       my_audio_capture_thread->change_capture_type(PLAYBACK_QUEUE_OFF);
+    }
+    else
+    {
+        my_audio_capture_thread->stopThread();
+    }
 }
