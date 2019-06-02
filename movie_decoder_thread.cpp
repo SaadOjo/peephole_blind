@@ -365,8 +365,14 @@ void movie_decoder_thread::setFilename(QString filename_string)
 
     src_ch_layout = aCodecCtx->channel_layout;
     src_rate = aCodecCtx->sample_rate;
+    src_rate = 8000;
     src_sample_fmt = aCodecCtx->sample_fmt;
     src_nb_samples = aCodecCtx->frame_size;
+
+    if(src_nb_samples == 0)
+    {
+        src_nb_samples = 1536;
+    }
 
     init_queue(myQueue);
     init_audio_swr();
@@ -377,7 +383,7 @@ void movie_decoder_thread::setFilename(QString filename_string)
     audio_start_context.mutex.lock();
     audio_start_context.queue = myQueue;
     audio_start_context.buffer_size = x_dst_bufsize;
-    audio_start_context.frequency =  44100;
+    audio_start_context.frequency =  aCodecCtx->sample_rate; //should not be fixed.
     audio_start_context.queue_size = QUEUE_SIZE;
     //add buff size here
     audio_start_context.mutex.unlock();
