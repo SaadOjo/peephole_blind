@@ -11,12 +11,12 @@ player_dialog::player_dialog(QWidget *parent, program_state *my_program_state) :
     my_movie_decoder_thread.setFilename(my_program_state->video_player_settings_state.recording_filename);
 
     connect(this,SIGNAL(setImage(image_with_mutex*)),ui->videoplyr_pane ,SLOT(setPicture(image_with_mutex*)));
-    connect(&my_movie_decoder_thread,SIGNAL(frameDecoded(image_with_mutex *)),ui->videoplyr_pane, SLOT(setPicture(image_with_mutex*)));
+    connect(&my_movie_decoder_thread,SIGNAL(frameDecoded(image_with_mutex *)),ui->videoplyr_pane, SLOT(setPicture(image_with_mutex*)), Qt::DirectConnection);
     connect(&my_movie_decoder_thread,SIGNAL(movie_stopped_signal()),this ,SLOT(playbackStoppedSlot()));
 
     //dont forget to delete.
     connect(&my_movie_decoder_thread,SIGNAL(audio_capture_started(start_context*)),&athread,SLOT(act_on_audio_thread_start(start_context*)));
-    connect(&my_movie_decoder_thread,SIGNAL(movie_stopped_signal()),&athread,SLOT(act_on_audio_thread_stop()));
+    //connect(&my_movie_decoder_thread,SIGNAL(movie_stopped_signal()),&athread,SLOT(act_on_audio_thread_stop()));
 
     QString fileName = "/nfs/index.png";
     image_with_mutex first_image;
@@ -48,7 +48,6 @@ void player_dialog::slider_test(int slider_value)
 
 player_dialog::~player_dialog()
 {
-
     delete ui;
 }
 
@@ -69,8 +68,6 @@ void player_dialog::on_pause_btn_clicked()
 
 void player_dialog::on_play_stop_btn_clicked()
 {
-//toggle text
-//stop start video playback
 
     if(!video_playing)
     {

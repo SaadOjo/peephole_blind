@@ -45,8 +45,6 @@ private slots:
 
 
 
-
-
     void on_seek_slider_sliderReleased();
 
 private:

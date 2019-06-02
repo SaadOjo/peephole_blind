@@ -96,9 +96,6 @@ void movie_encoder_thread::run(){
         {
             encode_audio_frame();
         }
-
-
-
     }
 
     video_ctx->mutex.lock();

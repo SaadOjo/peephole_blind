@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QTime>
 #include <QMutex>
+#include <QDebug>
 #include <QFileDialog> //temp
 #include <sys/time.h> //temp
 #include "structures.h"
@@ -13,25 +14,26 @@ extern "C"
 {
 
 #define __STDC_CONSTANT_MACROS // for UINT64_C
+#define __STDC_FORMAT_MACROS
+
 
 #ifndef INT64_C
 #define INT64_C(c) (c ## LL)
 #define UINT64_C(c) (c ## ULL)
 #endif
 
-#include <libavutil/opt.h>
-#include <libavutil/channel_layout.h>
+#include <libavutil/imgutils.h>
 #include <libavutil/samplefmt.h>
-#include <libswresample/swresample.h>
+#include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
+
+//#include <libavutil/imgutils.h>
+//#include <libavutil/parseutils.h>
 #include <libswscale/swscale.h>
 
 }
 
-#define AUDIO_BUFFER_SIZE 1024
-#define MAX_AUDIO_FRAME_SIZE 192000
+#define AUDIO_BUFFER_SIZE 1024 //maybe not.
 #define QUEUE_SIZE 300
 
 typedef struct seek_request
@@ -58,17 +60,15 @@ public:
     ~movie_decoder_thread();
 
     void stopThread();
-    void startThread();
+    void startThread(); //can define filename to start thread probably.
     void setFilename(QString filename);
     image_with_mutex *myIWM;
     safe_queue *myQueue;
     start_context audio_start_context;
 
-
 protected:
     void run();
 signals:
-
     void frameDecoded(image_with_mutex *imageMutex);
     void audio_capture_started(start_context*);
     void movie_stopped_signal();
@@ -79,57 +79,51 @@ public slots:
     void seek_request_slot(int);
 
 private:
-
+    int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx, enum AVMediaType type);
+    int decode_packet(int *got_frame, int cached);
     QString filename;
     bool continue_loop;
 
-    AVFormatContext   *pFormatCtx;
-    int               i, videoStream,audioStream;
-    AVCodecContext    *pCodecCtxOrig;
-    AVCodecContext    *pCodecCtx;
-    AVCodec           *pCodec;
-    AVFrame           *pFrame,*frame;
-    AVFrame           *pFrameRGB;
-    AVPacket          packet;
-    int               frameFinished;
-    int               numBytes;
-    uint8_t           *buffer;
-    AVCodecContext    *aCodecCtxOrig;
-    AVCodecContext    *aCodecCtx;
-    AVCodec           *aCodec;
-    struct SwsContext *sws_ctx;
-
-    //resampler stuff
-    struct SwrContext *swr_ctx;
-    int dst_nb_samples;
-    int max_dst_nb_samples;
-    int dst_nb_channels;
-    int dst_linesize;
-    uint8_t **dst_data;
-
-
-    int64_t src_ch_layout; //get from stream
-    int64_t dst_ch_layout;
-
-    enum AVSampleFormat src_sample_fmt; //get from data.
-    enum AVSampleFormat dst_sample_fmt;
-
-    int ret;
-    int src_rate; //get from stream.
-    int dst_rate;
-    int src_nb_samples; //get from stream
-
-    void init_audio_swr();
-
-    int decode_audio_packet(int *got_frame, int cached);
     void put_in_queue(safe_queue *queue, unsigned char *frame);
     int init_queue(safe_queue *queue);
 
     int total_movie_duration;  //seconds
-
     seek_request my_seek_request;
     video_state  my_video_state;
     struct timeval timer_start, timer_now;
+
+    //decoder variables
+     AVFormatContext      *fmt_ctx;
+     AVCodecContext       *video_dec_ctx, *audio_dec_ctx;
+     int                  width, height;
+     enum AVPixelFormat   pix_fmt;
+     AVStream             *video_stream, *audio_stream;
+     const char           *src_filename;
+     uint8_t              *video_dst_data[4];
+     int                  video_dst_linesize[4];
+     int                  video_dst_bufsize;
+     int                  video_stream_idx, audio_stream_idx;
+     AVFrame              *frame;
+     AVPacket             pkt;
+     int                  video_frame_count;
+     int                  audio_frame_count;
+
+     unsigned char*      image_buffer;
+     bool                first_frame_after_reset;
+
+     //picture rescaler variables
+     bool                picture_rescaling_needed;
+     uint8_t             *rsc_data[4];
+     int                 rsc_linesize[4];
+     int                 rsc_w, rsc_h;
+     enum AVPixelFormat  rsc_pix_fmt;
+     const char          *rsc_size;
+     int                 rsc_bufsize;
+     struct SwsContext   *sws_ctx;
+
+     //Timing variables
+     QTime              video_time;
+
 };
 
 #endif // MOVIE_DECODER_THREAD_H

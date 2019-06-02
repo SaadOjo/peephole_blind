@@ -26,7 +26,7 @@ struct start_context
 {
     QMutex        mutex;
     safe_queue    *queue;
-    int           buffer_size;
+    int           buffer_size; //in bytes apparently.
     int           queue_size;
     int           frequency;
 };
