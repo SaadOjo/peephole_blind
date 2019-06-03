@@ -25,8 +25,8 @@ void audio_playback_thread::get_from_queue(safe_queue *queue, unsigned char *fra
     queue->lock.lock();
     if(queue->queue_size == 0)
     {
-        fprintf(stderr,"Waiting for data to be filled...\n");
-        //queue->filled_cond.wait(&queue->lock); //might have issues
+       // fprintf(stderr,"Waiting for data to be filled...\n");
+        queue->filled_cond.wait(&queue->lock); //might have issues
     }
     else
     {

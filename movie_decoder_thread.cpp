@@ -15,7 +15,6 @@
 
 void movie_decoder_thread::seek_request_slot(int seek_pos)
 {
-
 }
 movie_decoder_thread::movie_decoder_thread(QObject *parent) : QThread(parent)
 {
@@ -38,9 +37,12 @@ movie_decoder_thread::movie_decoder_thread(QObject *parent) : QThread(parent)
     audio_frame_count = 0;
 
     //picture rescaler variables
-
     rsc_pix_fmt = AV_PIX_FMT_RGB565;
     rsc_size = NULL;
+
+    //audio resampler variables
+    dst_ch_layout = AV_CH_LAYOUT_STEREO;
+    dst_data = NULL;
 
     continue_loop = false;
     myQueue = new(safe_queue);
@@ -68,11 +70,21 @@ movie_decoder_thread::~movie_decoder_thread()
     av_frame_free(&frame);
     av_free(video_dst_data[0]);
 
-    //free picture rescaler stuff //if it has been initialized
+    //free picture rescaler stuff if it has been initialized
     if(picture_rescaling_needed)
     {
         av_freep(&rsc_data[0]);
         sws_freeContext(sws_ctx);
+    }
+
+    if(audio_resampling_needed)
+    {
+        if (dst_data) //will it work like this? (i guess yes because it was made null)
+        {
+            av_freep(&dst_data[0]);
+        }
+        av_freep(&dst_data);
+        swr_free(&swr_ctx);
     }
 
     fprintf(stderr,"Have reached the end of the deconstruction of thread. \n");
@@ -113,7 +125,7 @@ int movie_decoder_thread::init_queue(safe_queue *queue)
     queue->lock.unlock();
 }
 
-void movie_decoder_thread::setFilename(QString filename_string)
+int movie_decoder_thread::setFilename(QString filename_string)
 {
     int ret = 0;
 
@@ -174,10 +186,11 @@ void movie_decoder_thread::setFilename(QString filename_string)
     pkt.data = NULL;
     pkt.size = 0;
 
-    /*
-    if (video_stream) //use to determine if should move forward.
-    if (audio_stream)
-    */
+     if(!video_stream && !audio_stream) //maybe over engineering here a bit.
+     {
+         //nothing to display
+         goto end;
+     }
 
     //Picture rescaler initialisation
     //do this if there is a need for conversion.
@@ -208,6 +221,10 @@ void movie_decoder_thread::setFilename(QString filename_string)
             goto end; //think here how to handle
         }
         rsc_bufsize = ret;
+
+        sws_ctx = sws_getContext(width, height, pix_fmt,
+                                 rsc_w, rsc_h, rsc_pix_fmt,
+                                 SWS_BILINEAR, NULL, NULL, NULL);
     }
     else
     {
@@ -215,14 +232,70 @@ void movie_decoder_thread::setFilename(QString filename_string)
     }
 
 
-    sws_ctx = sws_getContext(width, height, pix_fmt,
-                             rsc_w, rsc_h, rsc_pix_fmt,
-                             SWS_BILINEAR, NULL, NULL, NULL);
+    if(audio_dec_ctx->sample_fmt != AV_SAMPLE_FMT_S16)
+    {
+        audio_resampling_needed = true;
+        //we need to have a audio rescaler
+        //also check the frequency. (maybe)
+
+        src_ch_layout = audio_dec_ctx->channel_layout;
+        src_rate = audio_dec_ctx->sample_rate;
+        dst_rate = src_rate; //ensure here that the rate us supported by our playback thread.
+        src_nb_channels = 0;
+        dst_nb_channels = 0;
+        src_nb_samples = audio_dec_ctx->frame_size == 0 ? 1536 : audio_dec_ctx->frame_size;
+        src_sample_fmt = audio_dec_ctx->sample_fmt;
+        dst_sample_fmt = AV_SAMPLE_FMT_S16;
+
+        fprintf(stderr, "src_nb_samples %d, src_rate: %d \n", src_nb_samples, src_rate);
+
+        /* create resampler context */
+        swr_ctx = swr_alloc();
+        if (!swr_ctx)
+        {
+            fprintf(stderr, "Could not allocate resampler context\n");
+            ret = AVERROR(ENOMEM);
+            goto resampler_fail_end; //this end is wrong.
+        }
+        /* set options */
+        av_opt_set_int(swr_ctx, "in_channel_layout",    src_ch_layout, 0);
+        av_opt_set_int(swr_ctx, "in_sample_rate",       src_rate, 0);
+        av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt", src_sample_fmt, 0);
+        av_opt_set_int(swr_ctx, "out_channel_layout",    dst_ch_layout, 0);
+        av_opt_set_int(swr_ctx, "out_sample_rate",       dst_rate, 0);
+        av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt", dst_sample_fmt, 0);
+        /* initialize the resampling context */
+        if ((ret = swr_init(swr_ctx)) < 0)
+        {
+            fprintf(stderr, "Failed to initialize the resampling context\n");
+            goto resampler_fail_end; //this end is wrong
+        }
+
+        /* compute the number of converted samples: buffering is avoided
+         * ensuring that the output buffer will contain at least all the
+         * converted input samples */
+        max_dst_nb_samples = dst_nb_samples = av_rescale_rnd(src_nb_samples, dst_rate, src_rate, AV_ROUND_UP);
+        /* buffer is going to be directly written to a rawaudio file, no alignment */
+        dst_nb_channels = av_get_channel_layout_nb_channels(dst_ch_layout);
+        ret = av_samples_alloc_array_and_samples(&dst_data, &dst_linesize, dst_nb_channels,dst_nb_samples, dst_sample_fmt, 0);
+
+        if (ret < 0)
+        {
+            fprintf(stderr, "Could not allocate destination samples\n");
+            goto resampler_fail_end; //this end is wrong
+        }
+    }
+    else
+    {
+        audio_resampling_needed = false;
+    }
+
+    audio_samples_for_queue = max_dst_nb_samples;
 
     audio_start_context.mutex.lock();
     audio_start_context.queue = myQueue;
-    audio_start_context.buffer_size = audio_dec_ctx->frame_size<<2; //inbytes; (should get from audio resampler perhaps)
-    audio_start_context.frequency =  audio_dec_ctx->sample_rate; //should not be fixed.
+    audio_start_context.buffer_size = audio_samples_for_queue<<2; //inbytes; (should get from audio resampler perhaps)
+    audio_start_context.frequency =  dst_rate; //should not be fixed.
     audio_start_context.queue_size = QUEUE_SIZE;
     audio_start_context.mutex.unlock();
 
@@ -247,8 +320,28 @@ void movie_decoder_thread::setFilename(QString filename_string)
             );
     */
 
+    return 0; //success
+
+resampler_fail_end:
+
+    if (dst_data) //will it work like this? (i guess yes because it was made null)
+    {
+        av_freep(&dst_data[0]);
+    }
+    av_freep(&dst_data);
+    swr_free(&swr_ctx);
 end:
-    printf("ended.");
+    //do we need to free resamplers and scalers here??
+
+    //if anything fails, free stuff and notify the caller.
+    avcodec_free_context(&video_dec_ctx);
+    avcodec_free_context(&audio_dec_ctx);
+    avformat_close_input(&fmt_ctx);
+    av_frame_free(&frame);
+    av_free(video_dst_data[0]);
+
+    return -1; //failure
+
 
 // Do all the initialization here.
 }
@@ -392,6 +485,7 @@ int movie_decoder_thread::decode_packet(int *got_frame, int cached)
                    cached ? "(cached)" : "",
                    audio_frame_count++, frame->nb_samples,
                    av_ts2timestr(frame->pts, &audio_dec_ctx->time_base));
+
             /* Write the raw audio data samples of the first plane. This works
              * fine for packed formats (e.g. AV_SAMPLE_FMT_S16). However,
              * most audio decoders output planar audio, which uses a separate
@@ -400,7 +494,46 @@ int movie_decoder_thread::decode_packet(int *got_frame, int cached)
              * in these cases.
              * You should use libswresample or libavfilter to convert the frame
              * to packed data. */
+
            // fwrite(frame->extended_data[0], 1, unpadded_linesize, audio_dst_file); convert and write add to queue.
+
+            dst_nb_samples = av_rescale_rnd(swr_get_delay(swr_ctx, src_rate) + src_nb_samples, dst_rate, src_rate, AV_ROUND_UP);
+
+            if (dst_nb_samples > max_dst_nb_samples) //if this changes our queue will not be able to keep up basically
+            {
+                av_freep(&dst_data[0]);
+                ret = av_samples_alloc(dst_data, &dst_linesize, dst_nb_channels, dst_nb_samples, dst_sample_fmt, 1);
+
+                //reinitalize the queue here.
+
+                if (ret < 0)
+                {
+                    //stop the main loop
+                    //break; do something
+                }
+                max_dst_nb_samples = dst_nb_samples;
+            }
+            /* convert to destination format */
+            ret = swr_convert(swr_ctx, dst_data, dst_nb_samples, (const uint8_t **)frame->extended_data, src_nb_samples);
+            if (ret < 0)
+            {
+                fprintf(stderr, "Error while converting\n");
+                //stop the main loop
+            }
+
+            dst_bufsize = av_samples_get_buffer_size(&dst_linesize, dst_nb_channels,ret, dst_sample_fmt, 1);
+
+            if (dst_bufsize < 0)
+            {
+                fprintf(stderr, "Could not get sample buffer size\n");
+                //stop the main loop
+            }
+           // printf("t:%f in:%d out:%d\n", t, src_nb_samples, ret);
+            //fwrite(dst_data[0], 1, dst_bufsize, dst_file);
+
+            audio_data = (unsigned char*)malloc(audio_samples_for_queue<<2); //also will need to change this is queue changes.
+            memcpy(audio_data, dst_data[0], audio_samples_for_queue<<2);
+            put_in_queue(myQueue, audio_data);
         }
     }
     /* dont need this as we are not using refcount
@@ -413,37 +546,33 @@ void movie_decoder_thread::run(){
 
     int ret, got_frame;
     //send signal to start audio playback thread;
-    //emit audio_capture_started(&audio_start_context); //mutex requrired??
+    emit audio_capture_started(&audio_start_context); //mutex requrired??
     qDebug("video capture thread sends signal to video playback thread to start audio playback.");
 
     first_frame_after_reset = true;
     continue_loop = true;
 
-    while(continue_loop)
+    //must seek here accordingly.
+
+    /* read frames from the file */
+    while (av_read_frame(fmt_ctx, &pkt) >= 0 && continue_loop)
     {
-        /* read frames from the file */
-        while (av_read_frame(fmt_ctx, &pkt) >= 0)
+        AVPacket orig_pkt = pkt;
+
+        do
         {
-            AVPacket orig_pkt = pkt;
-
-            do
+            ret = decode_packet(&got_frame, 0);
+            if (ret < 0)
             {
-                ret = decode_packet(&got_frame, 0);
-                if (ret < 0)
-                {
-                    break;
-                }
-                pkt.data += ret;
-                pkt.size -= ret;
+                break;
             }
-            while (pkt.size > 0);
+            pkt.data += ret;
+            pkt.size -= ret;
 
-            av_packet_unref(&orig_pkt);
         }
+        while (pkt.size > 0);
+        av_packet_unref(&orig_pkt);
     }
-    //apparently our loop never ends.
-
-    qDebug("ENDED THE CONTINUE LOOP PART.");
 
     /* flush cached frames */
     pkt.data = NULL;
@@ -455,7 +584,7 @@ void movie_decoder_thread::run(){
     while (got_frame);
 
     qDebug("video stopped x.");
-    emit movie_stopped_signal();
+    emit movie_stopped_signal(); //connects to both audio thread and parent.
 
 }
 

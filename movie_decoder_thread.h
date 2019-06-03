@@ -31,6 +31,11 @@ extern "C"
 //#include <libavutil/parseutils.h>
 #include <libswscale/swscale.h>
 
+#include <libavutil/opt.h>  //do we need all of this?
+#include <libavutil/channel_layout.h>
+#include <libavutil/samplefmt.h>
+#include <libswresample/swresample.h>
+
 }
 
 #define AUDIO_BUFFER_SIZE 1024 //maybe not.
@@ -61,7 +66,7 @@ public:
 
     void stopThread();
     void startThread(); //can define filename to start thread probably.
-    void setFilename(QString filename);
+    int  setFilename(QString filename);
     image_with_mutex *myIWM;
     safe_queue *myQueue;
     start_context audio_start_context;
@@ -124,6 +129,21 @@ private:
      //Timing variables
      QTime              video_time;
 
+     //audio resampler variables
+     bool                   audio_resampling_needed;
+     int64_t                src_ch_layout, dst_ch_layout;
+     int                    src_rate, dst_rate;
+     uint8_t                **dst_data;
+     int                    src_nb_channels, dst_nb_channels;
+     int                    src_linesize, dst_linesize;
+     int                    src_nb_samples, dst_nb_samples, max_dst_nb_samples;
+     enum AVSampleFormat    src_sample_fmt, dst_sample_fmt;
+     int                    dst_bufsize;
+     const char             *fmt;
+     struct SwrContext      *swr_ctx;
+
+     int                    audio_samples_for_queue;
+     unsigned char*         audio_data;
 };
 
 #endif // MOVIE_DECODER_THREAD_H
