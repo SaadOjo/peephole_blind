@@ -84,7 +84,7 @@ void movie_encoder_thread::run(){
     while(continue_loop)
     {
         //encode_audio_frame();
-        //encode_video_frame();
+        encode_video_frame();
 
         //have to check here for timing.
         //QCoreApplication::processEvents(QEventLoop::ExcludeSocketNotifiers,10);
@@ -95,7 +95,9 @@ void movie_encoder_thread::run(){
         } else
         {
             encode_audio_frame();
+
         }
+
     }
 
     video_ctx->mutex.lock();

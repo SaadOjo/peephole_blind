@@ -132,6 +132,7 @@ int movie_decoder_thread::setFilename(QString filename_string)
     filename = filename_string;
     qDebug() << "Filename is: " << filename << "\n";
     src_filename = filename.toLatin1().constData();
+    fprintf(stderr, "source filename: %s\n", src_filename);
 
     /* open input file, and allocate format context */
     if (avformat_open_input(&fmt_ctx, src_filename, NULL, NULL) < 0)

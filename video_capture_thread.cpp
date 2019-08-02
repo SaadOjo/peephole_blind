@@ -220,6 +220,9 @@ void video_capture_thread::run(){
 
                     *(rgb_image_buffer + i*2 + 1) = *(image_buffer + i*2 );
                     *(rgb_image_buffer + i*2)     = *(image_buffer + i*2 + 1);
+
+                     //*(rgb_image_buffer + i*2 ) = *(image_buffer + i*2 ); //processor loading
+                     //*(rgb_image_buffer + i*2 + 1)     = *(image_buffer + i*2 + 1);
                 }
 
                 break;

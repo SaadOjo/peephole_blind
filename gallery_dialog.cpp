@@ -9,9 +9,12 @@ gallery_dialog::gallery_dialog(QWidget *parent, program_state *my_program_state)
 {
     ui->setupUi(this);
     gallery_dialog_program_state = my_program_state;
+    QString video_directory;
+    video_directory = QString::fromLocal8Bit(gallery_dialog_program_state->settings_state.movie_recording_directory);
+    //QDir dir("/media/mmcblk0p1/recordings");
+    //QDir dir("./"); //use the same as the recording thing here.
+     QDir dir(video_directory); //use the same as the recording thing here.
 
-    QDir dir("/media/mmcblk0p1/recordings");
-    //QDir dir("./");
 
     if(dir.exists())
     {
@@ -51,7 +54,10 @@ void gallery_dialog::on_play_btn_clicked()
    // QListWidgetItem *videoItem = (ui->listWidget->currentItem()).text();
     QString fn =   (ui->listWidget->currentItem())->text();
     qDebug() << fn;
-    gallery_dialog_program_state->video_player_settings_state.recording_filename =  "/media/mmcblk0p1/recordings/" + fn;
+    QString video_directory;
+    video_directory = QString::fromLocal8Bit(gallery_dialog_program_state->settings_state.movie_recording_directory);
+    gallery_dialog_program_state->video_player_settings_state.recording_filename =  video_directory + "/" + fn;
+    //gallery_dialog_program_state->video_player_settings_state.recording_filename =  "./" + fn;
     player_dialog plr_diag(this,gallery_dialog_program_state);
     plr_diag.setWindowState(Qt::WindowFullScreen);
     plr_diag.exec();

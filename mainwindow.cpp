@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     my_program_state.settings_state.movie_recording_name_prefix = "recording";
     my_program_state.settings_state.movie_recording_directory = "/media/mmcblk0p1/recordings/";
+    //my_program_state.settings_state.movie_recording_directory = "./";
     my_program_state.settings_state.bell_sound = 1; //default
 
 
