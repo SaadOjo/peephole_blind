@@ -29,7 +29,9 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
     myIWM = new image_with_mutex;
 
 
+//    set_camera_color_space(RGB16);
     set_camera_color_space(RGB16);
+
 /*
     my_driver.write_register(0x12,0x14); //resoloution and rgb mode
     my_driver.write_register(0x3D,0x92);
@@ -58,7 +60,7 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
     //while(1);
     //PxP my_pxp;
     //my_pxp.start();
-
+/*
     fd = v4l2_open(dev_name, O_RDWR | O_NONBLOCK, 0);
     if (fd < 0) {
             perror("Cannot open device");
@@ -123,9 +125,13 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
     type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
     xioctl(fd, VIDIOC_STREAMON, &type);
-
-    image_buffer =  (unsigned char*) buffers[buf.index].start; //problem found.
+*/
+    //image_buffer =  (unsigned char*) buffers[buf.index].start; //problem found. //BLIND
     //QImage otherImage(image_buffer, FRAME_WIDTH, FRAME_HEIGHT, QImage::Format_RGB888);
+
+
+    image_buffer =(unsigned char*)malloc(320*240*2); //NOT BLIND
+    memset(image_buffer, 200, 320*240*2);            //NOT BLIND
 
     rgb_image_buffer =(unsigned char*)malloc(320*240*2);
     memset(rgb_image_buffer, 200, 320*240*2);
@@ -134,6 +140,8 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
     //memset(rgb_image_buffer, 200, 320*240*2);
 
     image = new QImage((unsigned char*) rgb_image_buffer, FRAME_WIDTH, FRAME_HEIGHT, QImage::Format_RGB16);
+    //image = new QImage((unsigned char*) rgb_image_buffer, FRAME_WIDTH, FRAME_HEIGHT, QImage::Format_RGB555);
+
 
     myIWM->mutex.lock(); //use wait condition
     myIWM->image = image;//new QImage();
@@ -150,6 +158,8 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
 void video_capture_thread::run(){
 
     QTime time2;
+    QTime video_time;
+    video_time.start();
 
     time->start();
 
@@ -175,7 +185,7 @@ void video_capture_thread::run(){
             time->start();
         }
 
-
+/* BLIND
             do {
                     FD_ZERO(&fds);
                     FD_SET(fd, &fds);
@@ -197,12 +207,33 @@ void video_capture_thread::run(){
             xioctl(fd, VIDIOC_DQBUF, &buf); //uncommented (this might have been the issue)
 
             image_buffer = (unsigned char*)buffers[buf.index].start; //useless if image_buffer is used as data for QImage. must be same actual memory location.
-
+*/
             //convert the image here.
 
 
             //time2.start();
             //rgb_image_buffer = convert from yuv422 to rgb565le
+
+            unsigned char red, green, blue, delta;
+            int time_delta;
+            time_delta = video_time.elapsed()*FRAME_HEIGHT/1000;
+            for(int row = 0; row<FRAME_HEIGHT;row++)
+            {
+                delta = row*255/FRAME_HEIGHT;
+                delta = (delta-time_delta)%FRAME_HEIGHT;
+                red = 255 - delta;
+                green = 255 - delta;
+                blue  = 0 + delta;
+
+                for(int column = 0; column<FRAME_WIDTH;column++)
+                {
+                    *(rgb_image_buffer + row*FRAME_WIDTH*2 + column*2    ) = green<<3&0xe0|blue>>3;
+                    *(rgb_image_buffer + row*FRAME_WIDTH*2 + column*2 + 1) = red&0xf8|green>>5;
+
+
+                }
+            }
+            /* BLIND
             unsigned char pix, lb, hb;
 
             switch(current_color_space)
@@ -227,6 +258,19 @@ void video_capture_thread::run(){
 
                 break;
 
+            case RGB24:
+                for(int i = 0; i<fmt.fmt.pix.sizeimage/2 ;i++)
+                {
+
+                    *(rgb_image_buffer + i*2 + 1) = *(image_buffer + i*2 );
+                    *(rgb_image_buffer + i*2)     = *(image_buffer + i*2 + 1);
+
+                     //*(rgb_image_buffer + i*2 ) = *(image_buffer + i*2 ); //processor loading
+                     //*(rgb_image_buffer + i*2 + 1)     = *(image_buffer + i*2 + 1);
+                }
+
+                break;
+
             case YUV422:
 
                 for(int i = 0; i<fmt.fmt.pix.sizeimage/2; i++)
@@ -240,6 +284,7 @@ void video_capture_thread::run(){
                 break;
 
             }
+            */
 
             //fprintf(stderr, "time taken for the conversion is: %0.3f \n",(float)time2.elapsed()/1000.0);
 
@@ -266,7 +311,10 @@ void video_capture_thread::run(){
 
 
             //rgb_image_buffer = image_buffer; //just testing
-            memcpy(encoder_buffer,image_buffer,fmt.fmt.pix.sizeimage);
+
+            //memcpy(encoder_buffer,image_buffer,fmt.fmt.pix.sizeimage);BLIND
+            memcpy(encoder_buffer,image_buffer,FRAME_WIDTH*FRAME_HEIGHT*2);//NOTBLIND
+
 
         my_safe_encode_video_context->put_data = true;
 
@@ -286,12 +334,14 @@ void video_capture_thread::run(){
         //qDebug("ending for now ccframe!");
         //continue_loop = false;
         //usleep(1000000/10);
-        xioctl(fd, VIDIOC_QBUF, &buf);
+
+        //xioctl(fd, VIDIOC_QBUF, &buf);//BLIND
+        usleep(1000000/24); //NOT BLIND
     }
 }
 void video_capture_thread::set_camera_color_space(enum color_space cspace)
 {
-
+/* no camera attached. so cannot run this.
     current_color_space = cspace;
 
     pseudo_camera_driver my_driver; //manually set the camera.
@@ -321,6 +371,31 @@ void video_capture_thread::set_camera_color_space(enum color_space cspace)
         my_driver.write_register(0x69,reg_mtxs&0xFE|0x00);
 
     }
+    else if(cspace == RGB24)
+    {
+        my_driver.write_register(0x12,0x14); //resoloution and rgb mode
+        my_driver.write_register(0x3D,0x92);
+        my_driver.write_register(0x40,0xF0); //RGBRaw
+        my_driver.read_register(0x40); //just set the last bit
+
+
+        // Setting the color matrix
+        //                       reg   val
+        my_driver.write_register(0x4F,0x40); //MT1 R
+        my_driver.write_register(0x50,0x00); //MT2 R
+        my_driver.write_register(0x51,0x00); //MT3 R
+        my_driver.write_register(0x52,0x00); //MT4 G
+        my_driver.write_register(0x53,0x40); //MT5 G
+        my_driver.write_register(0x54,0x00); //MT6 G
+        my_driver.write_register(0x55,0x00); //MT7 B
+        my_driver.write_register(0x56,0x00); //MT8 B
+        my_driver.write_register(0x57,0x40); //MT9 B
+        my_driver.write_register(0x58,0b01110111); //MTXS (9:2)
+        unsigned char reg_mtxs = my_driver.read_register(0x69); //just set the last bit
+        my_driver.write_register(0x69,reg_mtxs&0xFE|0x00);
+
+    }
+    */
 /*
     my_driver.write_register(0x12,0x14); //resoloution and rgb mode
     my_driver.write_register(0x3D,0x92);

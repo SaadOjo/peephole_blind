@@ -2,9 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTimer>
+
 #include "video_capture_thread.h"
 #include "audio_capture_thread.h"
 #include "audio_playback_thread.h"
+#include "backlight.h"
 
 
 #include "movie_encoder_thread.h"
@@ -47,6 +50,8 @@ private slots:
 
     void on_hear_btn_released();
 
+    void operational_timeout();
+
 private:
     Ui::MainWindow *ui;
 
@@ -63,6 +68,8 @@ private:
    // PxP my_pxp;
     program_state my_program_state;
     bool record_or_stop_btn_state;
+    backlight  mybacklight;
+
 };
 
 #endif // MAINWINDOW_H

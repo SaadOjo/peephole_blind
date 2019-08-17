@@ -31,7 +31,8 @@
 enum color_space
 {
     YUV422,
-    RGB16
+    RGB16,
+    RGB24
 };
 
 

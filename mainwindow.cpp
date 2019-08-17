@@ -20,8 +20,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //will call set_default_program_state(); here;
 
     my_program_state.settings_state.movie_recording_name_prefix = "recording";
-    my_program_state.settings_state.movie_recording_directory = "/media/mmcblk0p1/recordings/";
-    //my_program_state.settings_state.movie_recording_directory = "./";
+    //my_program_state.settings_state.movie_recording_directory = "/media/mmcblk0p1/recordings/";
+    my_program_state.settings_state.movie_recording_directory = "./";
     my_program_state.settings_state.bell_sound = 1; //default
 
 
@@ -80,7 +80,10 @@ void MainWindow::on_record_or_stop_btn_clicked()
 
 void MainWindow::on_menu_btn_clicked()
 {
+    mybacklight.turn_off();
+    QTimer::singleShot(2000, this, SLOT(operational_timeout()));
 
+/*
     //what happends if the encoder is running?
 
     my_video_capture_thread->stopThread();
@@ -92,6 +95,7 @@ void MainWindow::on_menu_btn_clicked()
     qDebug() << "Returning from menu dialog!";
     my_video_capture_thread->startThread();
     //my_audio_capture_thread->startThread(PLAYBACK_AND_ENCODER_QUEUES); //depends on previous state
+    */
 
 }
 void MainWindow::ring_bell_slot()
@@ -173,3 +177,9 @@ void MainWindow::on_hear_btn_released()
         my_audio_capture_thread->stopThread();
     }
 }
+
+void MainWindow::operational_timeout()
+{
+    mybacklight.turn_on(); //reversed now
+}
+
