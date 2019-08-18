@@ -26,7 +26,7 @@ void interrupt::run(){
         int n;
 
 
-        for (int i = 1; i < 100; i++)
+        while(continue_loop) //this method still had issues with ending thread as we area wailing for poll to return
         {
 
             f = open(gpio_value_path, O_RDONLY);

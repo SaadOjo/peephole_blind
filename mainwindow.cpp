@@ -8,6 +8,11 @@ MainWindow::MainWindow(QWidget *parent) :
     my_bell_thread = NULL;
     ui->setupUi(this);
 
+    display_on_timer.setSingleShot(true);
+    display_on_timer.setInterval(10000);
+    connect(&display_on_timer, SIGNAL(timeout()), this, SLOT(operational_timeout()));
+
+
     my_safe_encode_video_context.mutex.lock();
     my_safe_encode_video_context.put_data = false;
     my_safe_encode_video_context.is_encoding = false;
@@ -29,6 +34,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //my_gpio_event_detector_thread  = new gpio_event_detector_thread(this, BELL_PIN);
     //my_gpio_event_detector_thread->startThread();
     //connect(my_gpio_event_detector_thread, SIGNAL(rising_edge()), this, SLOT(ring_bell_slot()));
+
+    myinterrupt.startThread();
+    connect(&myinterrupt, SIGNAL(edge()), this, SLOT(motion_detected_slot()));
 
 
     my_audio_capture_thread = new audio_capture_thread(this, &my_safe_encode_audio_context);
@@ -80,8 +88,6 @@ void MainWindow::on_record_or_stop_btn_clicked()
 
 void MainWindow::on_menu_btn_clicked()
 {
-    mybacklight.turn_off();
-    QTimer::singleShot(2000, this, SLOT(operational_timeout()));
 
 /*
     //what happends if the encoder is running?
@@ -180,6 +186,12 @@ void MainWindow::on_hear_btn_released()
 
 void MainWindow::operational_timeout()
 {
-    mybacklight.turn_on(); //reversed now
+    mybacklight.turn_off();
+}
+void MainWindow:: motion_detected_slot()
+{
+    mybacklight.turn_on();
+    my_video_capture_thread->set_take_photos_flag();
+    display_on_timer.start();
 }
 

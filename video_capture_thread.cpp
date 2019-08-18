@@ -27,6 +27,7 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
     time = new QTime;
     frame_counter = 0;
     myIWM = new image_with_mutex;
+    messageIWM = new image_with_mutex;
 
 
 //    set_camera_color_space(RGB16);
@@ -154,17 +155,114 @@ video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_con
     //emit give_encode_video_context(my_safe_encode_video_context); REMOVE
 
 }
+void video_capture_thread::set_take_photos_flag()
+{
+    take_photos = true;
+}
+
+void video_capture_thread::take_and_save_photo()
+{
+    // change colorspace appropriately
+
+    //can create a function that takes photo and also use it in the main loop
+    unsigned char red, green, blue, delta;
+    int time_delta;
+    time_delta = video_time.elapsed()*FRAME_HEIGHT/1000;
+    for(int row = 0; row<FRAME_HEIGHT;row++)
+    {
+        delta = row*255/FRAME_HEIGHT;
+        delta = (delta-time_delta)%FRAME_HEIGHT;
+        red = 255 - delta;
+        green = 255 - delta;
+        blue  = 0 + delta;
+
+        for(int column = 0; column<FRAME_WIDTH;column++)
+        {
+            *(rgb_image_buffer + row*FRAME_WIDTH*2 + column*2    ) = green<<3&0xe0|blue>>3;
+            *(rgb_image_buffer + row*FRAME_WIDTH*2 + column*2 + 1) = red&0xf8|green>>5;
+        }
+
+    }
+
+    QImageWriter writer("photo_x.bmp", "BMP");
+    myIWM->mutex.lock();
+    writer.write(*myIWM->image);
+    myIWM->mutex.unlock();
+
+
+}
+
+void video_capture_thread::show_image()
+{
+    emit renderedImage(myIWM);
+}
+
+void video_capture_thread::show_message(int message)
+{
+    QString fileName;
+
+    //can we use a image that is destroyed in this function?
+    switch(message)
+    {
+        case 1: //motion
+        fileName = "hareket_resim.bmp";
+            break;
+        case 2: //photo
+        fileName = "fotograf_resim.bmp";
+            break;
+    }
+
+    QImage messageImage(fileName);
+
+    messageIWM->mutex.lock();
+    messageIWM->image = &messageImage;
+    messageIWM->mutex.unlock();
+
+    emit renderedImage(messageIWM);
+}
+
+
 
 void video_capture_thread::run(){
 
-    QTime time2;
-    QTime video_time;
-    video_time.start();
+//    QTime time2;
 
+    video_time.start();
     time->start();
 
     while(continue_loop)
     {
+        if(take_photos)
+        {
+            take_and_save_photo(); //photo 1
+            show_message(1); //motion
+            qDebug("Take and save photo #1 \n");
+            qDebug("Show motion message \n");
+            usleep(1000000*0.5);
+            show_message(2); //photo
+            qDebug("Show taking photo message \n");
+            usleep(1000000*0.5);
+            show_image(); //1
+            take_and_save_photo(); //photo 2
+            qDebug("Show Image #1\n");
+            qDebug("Take and save photo #2 \n");
+            usleep(1000000*0.5);
+            show_message(2); //photo
+            qDebug("Show taking photo message \n");
+            usleep(1000000*0.5);
+            show_image(); //2
+            qDebug("Show Image #2\n");
+            usleep(1000000*1);
+            show_message(2); //photo
+            qDebug("Show taking photo message \n");
+            usleep(1000000*0.5);
+            take_and_save_photo(); //photo 3
+            show_image(); //3
+            qDebug("Take and save photo #3 \n");
+            qDebug("Show Image #3\n");
+            usleep(1000000*1);
+            take_photos = false;
+        }
 
 
         frame_counter++;

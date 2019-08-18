@@ -7,7 +7,7 @@
 #include <QWaitCondition>
 #include <QCoreApplication> //for process events
 #include <QTime>
-
+#include <QImageWriter>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,8 +50,11 @@ public:
     void stopThread();
     void startThread();
     void set_camera_color_space(enum color_space cspace);
+    void set_take_photos_flag();
 
     image_with_mutex *myIWM;
+    image_with_mutex *messageIWM;
+
 
 protected:
     void run();
@@ -62,9 +65,16 @@ signals:
 private:
     safe_encode_video_context  *my_safe_encode_video_context;
 
+    void take_and_save_photo();
+    void show_image();
+    void show_message(int message);
+
+
     unsigned char* image_buffer;
     unsigned char* rgb_image_buffer;
     unsigned char* encoder_buffer;
+
+    QTime video_time;
 
     QImage *image;
 
@@ -87,6 +97,7 @@ private:
     FILE                            *fout;
     struct buffer                   *buffers;
     bool                            continue_loop;
+    bool                            take_photos;
     QTime                           *time;
     unsigned long int               frame_counter;
 

@@ -8,6 +8,8 @@
 #include "audio_capture_thread.h"
 #include "audio_playback_thread.h"
 #include "backlight.h"
+#include "interrupt.h"
+
 
 
 #include "movie_encoder_thread.h"
@@ -52,6 +54,9 @@ private slots:
 
     void operational_timeout();
 
+    void motion_detected_slot();
+
+
 private:
     Ui::MainWindow *ui;
 
@@ -69,7 +74,8 @@ private:
     program_state my_program_state;
     bool record_or_stop_btn_state;
     backlight  mybacklight;
-
+    interrupt  myinterrupt;
+    QTimer     display_on_timer;
 };
 
 #endif // MAINWINDOW_H
