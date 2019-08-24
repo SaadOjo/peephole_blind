@@ -104,6 +104,7 @@ void audio_capture_thread::put_in_queue(safe_queue *queue, unsigned char *frame)
         queue->head++;
         queue->head = queue->head%AUDIO_CAPTURE_QUEUE_SIZE;
         queue->queue_size++;
+        queue->filled_cond.wakeOne(); //added now
         //printf("%d size of the queue is.\n",queue->queue_size);
     }
     queue->lock.unlock();

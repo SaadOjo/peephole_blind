@@ -56,8 +56,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(my_video_capture_thread, SIGNAL(renderedImage(image_with_mutex *)), ui->videoPane, SLOT(setPicture(image_with_mutex *)),Qt::DirectConnection); //just made direct. (has solved the issue.)
 
-    connect(my_audio_capture_thread,SIGNAL(audio_capture_started_signal(start_context*)),&my_audio_playback_thread,SLOT(act_on_audio_thread_start(start_context*)));
-    connect(my_audio_capture_thread,SIGNAL(audio_capture_stopped_signal()),&my_audio_playback_thread,SLOT(act_on_audio_thread_stop()));
+    connect(my_audio_capture_thread,SIGNAL(audio_capture_started_signal(start_context*)),&my_audio_playback_thread,SLOT(act_on_audio_thread_start(start_context*)),Qt::DirectConnection);
+    connect(my_audio_capture_thread,SIGNAL(audio_capture_stopped_signal()),&my_audio_playback_thread,SLOT(act_on_audio_thread_stop()),Qt::DirectConnection);
     //for audio.
 
     my_program_state.video_player_settings_state.recording_filename = "empty";
@@ -145,10 +145,11 @@ void MainWindow::on_talk_btn_pressed()
 {
     //check if encoder is not running and stuff. code below is just for testing,
 
+
     //if encoder is running,
     //make a function in audio capture thread which changes modes while running and calls appropriate signals.
     //then just switch mode with both playback and encoder queues running.
-
+    // functionality removed for demo
     if(my_movie_encoder_thread->isRunning() && my_audio_capture_thread->isRunning())
     {
        my_audio_capture_thread->change_capture_type(PLAYBACK_AND_ENCODER_QUEUES);
@@ -157,10 +158,15 @@ void MainWindow::on_talk_btn_pressed()
     {
         my_audio_capture_thread->startThread(PLAYBACK_QUEUE);
     }
+
+
 }
 
 void MainWindow::on_talk_btn_released()
 {
+
+
+
     if(my_movie_encoder_thread->isRunning() && my_audio_capture_thread->isRunning()) //bit stupid here.
     {
        my_audio_capture_thread->change_capture_type(PLAYBACK_QUEUE_OFF);
@@ -169,10 +175,12 @@ void MainWindow::on_talk_btn_released()
     {
         my_audio_capture_thread->stopThread();
     }
+
 }
 
 void MainWindow::on_hear_btn_pressed()
 {
+
     if(my_movie_encoder_thread->isRunning() && my_audio_capture_thread->isRunning())
     {
        my_audio_capture_thread->change_capture_type(LISTEN_PLAYBACK_AND_ENCODER_QUEUES);
@@ -181,10 +189,12 @@ void MainWindow::on_hear_btn_pressed()
     {
         my_audio_capture_thread->startThread(LISTEN_PLAYBACK_QUEUE);
     }
+
 }
 
 void MainWindow::on_hear_btn_released()
 {
+
     if(my_movie_encoder_thread->isRunning() && my_audio_capture_thread->isRunning()) //bit stupid here.
     {
        my_audio_capture_thread->change_capture_type(PLAYBACK_QUEUE_OFF);
@@ -193,6 +203,7 @@ void MainWindow::on_hear_btn_released()
     {
         my_audio_capture_thread->stopThread();
     }
+
 }
 
 void MainWindow::operational_timeout()

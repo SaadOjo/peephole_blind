@@ -52,7 +52,7 @@ void audio_playback_thread::run(){
 
     while(continue_loop)
     {
-        //fprintf(stderr, "Bleh!\n");
+        fprintf(stderr, "Bleh!\n");
         //sleep(1);
 
             get_from_queue(myQueue, buffer,queue_buffer_size);
@@ -93,10 +93,18 @@ void audio_playback_thread::init()
     pcm_name = strdup("plughw:0,0");
     snd_pcm_hw_params_alloca(&hwparams);
 
+    /*
+    if (snd_pcm_open(&pcm_handle, pcm_name, stream, SND_PCM_NONBLOCK) < 0) {
+      fprintf(stderr, "Error opening Playback PCM device %s\n", pcm_name);
+      goto end;
+    }
+    */
+
     if (snd_pcm_open(&pcm_handle, pcm_name, stream, 0) < 0) {
       fprintf(stderr, "Error opening Playback PCM device %s\n", pcm_name);
       goto end;
     }
+
    /* Init hwparams with full configuration space */
     if (snd_pcm_hw_params_any(pcm_handle, hwparams) < 0) {
       fprintf(stderr, "Can not configure this PCM device.\n");

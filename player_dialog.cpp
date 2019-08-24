@@ -15,7 +15,7 @@ player_dialog::player_dialog(QWidget *parent, program_state *my_program_state) :
 
     connect(this,SIGNAL(setImage(image_with_mutex*)),ui->videoplyr_pane ,SLOT(setPicture(image_with_mutex*)));
     connect(&my_movie_decoder_thread,SIGNAL(frameDecoded(image_with_mutex *)),ui->videoplyr_pane, SLOT(setPicture(image_with_mutex*)), Qt::DirectConnection);
-    //connect(&my_movie_decoder_thread,SIGNAL(movie_stopped_signal()),this ,SLOT(playbackStoppedSlot()),Qt::DirectConnection);
+    connect(&my_movie_decoder_thread,SIGNAL(movie_stopped_signal()),this ,SLOT(playbackStoppedSlot()),Qt::DirectConnection);
 
     //dont forget to delete.
     connect(&my_movie_decoder_thread,SIGNAL(audio_capture_started(start_context*)),&athread,SLOT(act_on_audio_thread_start(start_context*)) , Qt::DirectConnection);
