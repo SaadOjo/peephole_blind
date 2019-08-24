@@ -584,7 +584,11 @@ void movie_decoder_thread::run(){
     }
     while (got_frame);
 
-    qDebug("video stopped x.");
+    qDebug("The video decoder thread has successfully finished");
+    //the following code is to prevent the audio_playback_thread from blocking.
+    audio_data = (unsigned char*)malloc(audio_samples_for_queue<<2); //also will need to change this is queue changes.
+    memset(audio_data, 0, audio_samples_for_queue<<2);
+    put_in_queue(myQueue, audio_data);
     emit movie_stopped_signal(); //connects to both audio thread and parent.
 
 }
@@ -593,7 +597,7 @@ void movie_decoder_thread::stopThread()
 {
     continue_loop = false; // allow the run command finish by ending while //may need mutex
     this->wait();          //wait for the thread to finish
-    qDebug("The video decoder thread has successfully finished");
+    //qDebug("The video decoder thread has successfully finished");
 }
 
 void movie_decoder_thread::startThread()

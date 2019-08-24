@@ -62,11 +62,12 @@ void movie_encoder_thread::run(){
     my_program_state->mutex.lock();
     strcpy(filename_prefix,my_program_state->settings_state.movie_recording_directory);
     strcat(filename_prefix,my_program_state->settings_state.movie_recording_name_prefix);
+    filenumber = my_program_state->settings_state.movie_recording_number++; //introduces gaps because middle files can be deleted
     my_program_state->mutex.unlock();
 
 
     strcat(filename_prefix,"_%d.mp4");
-    sprintf(filename,filename_prefix ,filenumber++);
+    sprintf(filename,filename_prefix ,filenumber);
     prepare_new_video_file(filename);
 
 

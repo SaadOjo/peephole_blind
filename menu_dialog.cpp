@@ -34,3 +34,11 @@ void menu_dialog::on_gallery_btn_clicked()
     my_gallery_dialog.setWindowState(Qt::WindowFullScreen);
     my_gallery_dialog.exec();
 }
+
+void menu_dialog::on_picture_gallery_button_clicked()
+{
+
+    picture_gallery my_picture_gallery(this, menu_dialog_program_state); //we don't know what it will need (yet) so we pass everything
+    my_picture_gallery.setWindowState(Qt::WindowFullScreen);
+    my_picture_gallery.exec();
+}

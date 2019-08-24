@@ -21,6 +21,8 @@
 #include <libv4l2.h>
 #include "structures.h"
 #include "pseudo_camera_driver.h"
+#include "program_state.h"
+
 
 #include "pxp.h"
 
@@ -44,7 +46,7 @@ class video_capture_thread : public QThread
     Q_OBJECT
 
 public:
-    video_capture_thread(QObject *parent = 0, safe_encode_video_context* vcontext = NULL);
+    video_capture_thread(QObject *parent = 0, safe_encode_video_context* vcontext = NULL, program_state* pstate = NULL ); //dont know what is best default for program state
     ~video_capture_thread();
 
     void stopThread();
@@ -103,6 +105,11 @@ private:
 
 
     enum color_space    current_color_space;
+
+    program_state * video_capture_thread_program_state;
+
+    char filename[50];
+    int filenumber;
 
 };
 

@@ -8,9 +8,10 @@
 
 #include "video_capture_thread.h"
 
-video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_context* vcontext) : QThread(parent)
+video_capture_thread::video_capture_thread(QObject *parent,safe_encode_video_context* vcontext, program_state* pstate ) : QThread(parent)
 {
-
+    video_capture_thread_program_state = pstate;
+    filenumber = 0;
     current_color_space = RGB16;
 
     if(vcontext != NULL)
@@ -184,7 +185,19 @@ void video_capture_thread::take_and_save_photo()
 
     }
 
-    QImageWriter writer("photo_x.bmp", "BMP");
+    char filename_prefix[40];
+
+    video_capture_thread_program_state->mutex.lock();
+    strcpy(filename_prefix,video_capture_thread_program_state->settings_state.picture_directory);
+    strcat(filename_prefix,"image");
+    filenumber = video_capture_thread_program_state->settings_state.picture_number++; //introduces gaps because middle files can be deleted
+    video_capture_thread_program_state->mutex.unlock();
+
+
+    strcat(filename_prefix,"_%d.bmp");
+    sprintf(filename,filename_prefix ,filenumber);
+
+    QImageWriter writer(QString::fromStdString(filename), "bmp");
     myIWM->mutex.lock();
     writer.write(*myIWM->image);
     myIWM->mutex.unlock();
@@ -205,10 +218,10 @@ void video_capture_thread::show_message(int message)
     switch(message)
     {
         case 1: //motion
-        fileName = "hareket_resim.bmp";
+        fileName = "./.hareket_resim.bmp";
             break;
         case 2: //photo
-        fileName = "fotograf_resim.bmp";
+        fileName = "./.fotograf_resim.bmp";
             break;
     }
 

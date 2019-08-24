@@ -2,6 +2,7 @@
 #define PLAYER_DIALOG_H
 
 #include <QDialog>
+#include <QDebug>
 #include "audio_playback_thread.h"
 #include "movie_decoder_thread.h"
 #include "structures.h"

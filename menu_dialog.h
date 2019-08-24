@@ -6,6 +6,7 @@
 
 #include "program_state.h"
 #include "gallery_dialog.h"
+#include "picture_gallery.h"
 #include "settings_dialog.h"
 
 namespace Ui {
@@ -26,6 +27,8 @@ private slots:
     void on_setting_btn_clicked();
 
     void on_gallery_btn_clicked();
+
+    void on_picture_gallery_button_clicked();
 
 private:
     Ui::menu_dialog *ui;

@@ -39,7 +39,10 @@ SOURCES += main.cpp\
     bell_thread.cpp \
     settings_dialog.cpp \
     interrupt.cpp \
-    backlight.cpp
+    backlight.cpp \
+    touch_detector.cpp \
+    picture_gallery.cpp \
+    picture_dialog.cpp
 
 HEADERS  += mainwindow.h \
     videopane.h \
@@ -59,13 +62,18 @@ HEADERS  += mainwindow.h \
     bell_thread.h \
     settings_dialog.h \
     interrupt.h \
-    backlight.h
+    backlight.h \
+    touch_detector.h \
+    picture_gallery.h \
+    picture_dialog.h
 
 FORMS    += mainwindow.ui \
     menu_dialog.ui \
     gallery_dialog.ui \
     player_dialog.ui \
-    settings_dialog.ui
+    settings_dialog.ui \
+    picture_gallery.ui \
+    picture_dialog.ui
 
 OTHER_FILES += \
     notes.txt

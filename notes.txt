@@ -48,3 +48,12 @@ Add date and duration to recordings database. (later other stuff as well. like m
 Improvements
 ******************
 Make the video recording variable frame rate.
+
+
+//demo issues
+
+.//recording stuff
+
+problem with going back after playback
+
+struct of program state had unallocated char* which might be causing seg faults

@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QDebug>
 #include <QDir>
+#include <QMessageBox>
 #include "player_dialog.h"
 #include "program_state.h"
 
@@ -18,11 +19,15 @@ class gallery_dialog : public QDialog
 public:
     explicit gallery_dialog(QWidget *parent = 0, program_state *my_program_state = NULL);
     ~gallery_dialog();
+private:
+    void populate_list();
     
 private slots:
     void on_back_btn_clicked();
 
     void on_play_btn_clicked();
+
+    void on_pushButton_clicked();
 
 private:
     Ui::gallery_dialog *ui;

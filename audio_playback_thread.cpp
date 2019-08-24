@@ -69,7 +69,7 @@ void audio_playback_thread::run(){
     snd_pcm_close(pcm_handle);
     //no need to free pcm_handle.
 
-    //qDebug("The audio playback thread has successfully finished (inside loop.) \n");
+    qDebug("The audio playback thread has successfully finished. \n");
 
 }
 
@@ -163,9 +163,9 @@ end:
 
 void audio_playback_thread::stopThread()
 {
+     qDebug("starting stopping of audion thread.");
     continue_loop = false; // allow the run command finish by ending while //may need mutex
     this->wait();          //wait for the thread to finish
-    qDebug("The audio playback thread has successfully finished");
 }
 
 void audio_playback_thread::startThread()

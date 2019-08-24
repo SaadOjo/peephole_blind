@@ -21,8 +21,10 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event);
+    void mousePressEvent(QMouseEvent *event);
 
 signals:
+    void mousePressedSignal();
 
 public slots:
     void setPicture(image_with_mutex *);

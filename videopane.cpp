@@ -18,6 +18,11 @@ void videopane::paintEvent(QPaintEvent *) {
     painter.drawPixmap(this->rect(),pixmap);
     //painter.drawPixmap(((QWidget*)parent())->rect(),pixmap);
 }
+void videopane::mousePressEvent(QMouseEvent *)
+{
+    emit mousePressedSignal();
+}
+
 
 
 void videopane::setPicture(image_with_mutex *i){

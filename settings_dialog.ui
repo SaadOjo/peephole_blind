@@ -136,6 +136,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="night_vision_checkbox">
+         <property name="text">
+          <string>Night Vision</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QCheckBox" name="checkBox_2">
          <property name="text">
           <string>WIFI Streaming</string>

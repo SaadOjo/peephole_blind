@@ -9,6 +9,8 @@
 #include "audio_playback_thread.h"
 #include "backlight.h"
 #include "interrupt.h"
+#include "touch_detector.h"
+
 
 
 
@@ -56,6 +58,8 @@ private slots:
 
     void motion_detected_slot();
 
+    void screen_pressed();
+
 
 private:
     Ui::MainWindow *ui;
@@ -75,6 +79,7 @@ private:
     bool record_or_stop_btn_state;
     backlight  mybacklight;
     interrupt  myinterrupt;
+    touch_detector *my_touch_detector;
     QTimer     display_on_timer;
 };
 

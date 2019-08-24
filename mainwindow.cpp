@@ -11,6 +11,11 @@ MainWindow::MainWindow(QWidget *parent) :
     display_on_timer.setSingleShot(true);
     display_on_timer.setInterval(10000);
     connect(&display_on_timer, SIGNAL(timeout()), this, SLOT(operational_timeout()));
+    display_on_timer.start(); //turns off light after application is first loaded.
+
+    my_touch_detector = new touch_detector;
+    qApp->installEventFilter(my_touch_detector);
+    connect(my_touch_detector, SIGNAL(touch_detected_signal()), this, SLOT(screen_pressed()));
 
 
     my_safe_encode_video_context.mutex.lock();
@@ -27,6 +32,12 @@ MainWindow::MainWindow(QWidget *parent) :
     my_program_state.settings_state.movie_recording_name_prefix = "recording";
     //my_program_state.settings_state.movie_recording_directory = "/media/mmcblk0p1/recordings/";
     my_program_state.settings_state.movie_recording_directory = "./";
+
+    my_program_state.settings_state.picture_directory = "./";
+
+    my_program_state.settings_state.movie_recording_number = 0; //default
+    my_program_state.settings_state.picture_number = 0; //default
+
     my_program_state.settings_state.bell_sound = 1; //default
 
 
@@ -40,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     my_audio_capture_thread = new audio_capture_thread(this, &my_safe_encode_audio_context);
-    my_video_capture_thread = new video_capture_thread(this, &my_safe_encode_video_context);
+    my_video_capture_thread = new video_capture_thread(this, &my_safe_encode_video_context, &my_program_state);
     my_movie_encoder_thread = new movie_encoder_thread(this, &my_safe_encode_video_context, &my_safe_encode_audio_context, &my_program_state);
 
     connect(my_video_capture_thread, SIGNAL(renderedImage(image_with_mutex *)), ui->videoPane, SLOT(setPicture(image_with_mutex *)),Qt::DirectConnection); //just made direct. (has solved the issue.)
@@ -89,7 +100,7 @@ void MainWindow::on_record_or_stop_btn_clicked()
 void MainWindow::on_menu_btn_clicked()
 {
 
-/*
+
     //what happends if the encoder is running?
 
     my_video_capture_thread->stopThread();
@@ -101,7 +112,7 @@ void MainWindow::on_menu_btn_clicked()
     qDebug() << "Returning from menu dialog!";
     my_video_capture_thread->startThread();
     //my_audio_capture_thread->startThread(PLAYBACK_AND_ENCODER_QUEUES); //depends on previous state
-    */
+
 
 }
 void MainWindow::ring_bell_slot()
@@ -188,6 +199,12 @@ void MainWindow::operational_timeout()
 {
     mybacklight.turn_off();
 }
+void MainWindow:: screen_pressed()
+{
+    mybacklight.turn_on(); //problem is that screen will turnoff even if you press other buttons and not press video pane.
+    display_on_timer.start();
+}
+
 void MainWindow:: motion_detected_slot()
 {
     mybacklight.turn_on();
