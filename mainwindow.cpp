@@ -13,6 +13,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&display_on_timer, SIGNAL(timeout()), this, SLOT(operational_timeout()));
     display_on_timer.start(); //turns off light after application is first loaded.
 
+    video_recording_on_timer.setSingleShot(true);
+    video_recording_on_timer.setInterval(8000);
+    connect(&video_recording_on_timer, SIGNAL(timeout()), this, SLOT(recording_timeout()));
+
+
     my_touch_detector = new touch_detector;
     qApp->installEventFilter(my_touch_detector);
     connect(my_touch_detector, SIGNAL(touch_detected_signal()), this, SLOT(screen_pressed()));
@@ -32,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     my_program_state.settings_state.movie_recording_name_prefix = "recording";
     //my_program_state.settings_state.movie_recording_directory = "/media/mmcblk0p1/recordings/";
     my_program_state.settings_state.movie_recording_directory = "./";
+    my_program_state.settings_state.action_on_motion = PICTURE; //takes picture by default.
 
     my_program_state.settings_state.picture_directory = "./";
 
@@ -77,23 +83,11 @@ void MainWindow::on_record_or_stop_btn_clicked()
 {
     if(record_or_stop_btn_state)
     {
-        record_or_stop_btn_state = false;
-        ui->record_or_stop_btn->setText("Stop");
-        my_video_capture_thread->set_camera_color_space(YUV422);
-        my_movie_encoder_thread->startThread();
-        //my_video_capture_thread->startThread();
-        my_audio_capture_thread->startThread(ENCODER_QUEUE);
-        //can also have a method that turns on queues while encoder is running. (can be useful for hear and talk.)
-
+        start_recording();
     }//record
     else
     {
-        record_or_stop_btn_state = true;
-        ui->record_or_stop_btn->setText("Record");
-        my_movie_encoder_thread->stopThread();
-        my_video_capture_thread->set_camera_color_space(RGB16);
-        //my_video_capture_thread->stopThread();
-        my_audio_capture_thread->stopThread();
+        stop_recording();
     }
 }
 
@@ -210,6 +204,10 @@ void MainWindow::operational_timeout()
 {
     mybacklight.turn_off();
 }
+void MainWindow::recording_timeout()
+{
+    stop_recording();
+}
 void MainWindow:: screen_pressed()
 {
     mybacklight.turn_on(); //problem is that screen will turnoff even if you press other buttons and not press video pane.
@@ -219,7 +217,46 @@ void MainWindow:: screen_pressed()
 void MainWindow:: motion_detected_slot()
 {
     mybacklight.turn_on();
-    my_video_capture_thread->set_take_photos_flag();
+    my_program_state.mutex.lock();
+    switch(my_program_state.settings_state.action_on_motion)
+    {
+    case PICTURE:
+        my_video_capture_thread->set_take_photos_flag();
+        break;
+    case VIDEO:
+        start_recording();
+        break;
+    }
+    my_program_state.mutex.unlock();
     display_on_timer.start();
+}
+void MainWindow::start_recording()
+{
+    if(record_or_stop_btn_state)
+    {
+        record_or_stop_btn_state = false;
+        ui->record_or_stop_btn->setText("Stop");
+        my_video_capture_thread->set_camera_color_space(YUV422);
+        my_movie_encoder_thread->startThread();
+        //my_video_capture_thread->startThread();
+        my_audio_capture_thread->startThread(ENCODER_QUEUE);
+        //can also have a method that turns on queues while encoder is running. (can be useful for hear and talk.)
+        video_recording_on_timer.start();
+
+    }
+
+}
+void MainWindow::stop_recording()
+{
+    if(!record_or_stop_btn_state)
+    {
+        record_or_stop_btn_state = true;
+        ui->record_or_stop_btn->setText("Record");
+        my_movie_encoder_thread->stopThread();
+        my_video_capture_thread->set_camera_color_space(RGB16);
+        //my_video_capture_thread->stopThread();
+        my_audio_capture_thread->stopThread();
+    }
+
 }
 

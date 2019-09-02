@@ -56,6 +56,8 @@ private slots:
 
     void operational_timeout();
 
+    void recording_timeout();
+
     void motion_detected_slot();
 
     void screen_pressed();
@@ -74,6 +76,9 @@ private:
     audio_capture_thread *my_audio_capture_thread;
     audio_playback_thread my_audio_playback_thread;
 
+    void start_recording();
+    void stop_recording();
+
    // PxP my_pxp;
     program_state my_program_state;
     bool record_or_stop_btn_state;
@@ -81,6 +86,8 @@ private:
     interrupt  myinterrupt;
     touch_detector *my_touch_detector;
     QTimer     display_on_timer;
+    QTimer     video_recording_on_timer;
+
 };
 
 #endif // MAINWINDOW_H

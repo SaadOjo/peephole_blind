@@ -147,6 +147,22 @@ void audio_capture_thread::run(){
           snd_pcm_prepare(pcm_handle);
           fprintf(stderr, "<<<<<<<<<<<<<<< Buffer Overrun >>>>>>>>>>>>>>>\n");
         }
+        //increase capture sound
+
+        for(int i = 0; i<periodsize>>2; i++)
+        {
+            short left, right;
+            left  = frame[i*4    ] | frame[i*4 + 1] << 8;
+            right = frame[i*4 + 2] | frame[i*4 + 3] << 8;
+            left = left*3;
+            right = right*3;
+
+            frame[i*4    ] = left;
+            frame[i*4 + 1] = left>>8;
+            frame[i*4 + 2] = right;
+            frame[i*4 + 3] = right>>8;
+        }
+
 
         if(store_in_playback_queue)
         {

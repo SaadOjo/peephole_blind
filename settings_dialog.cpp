@@ -22,3 +22,21 @@ void settings_dialog::on_back_btn_clicked()
 {
     this->close();
 }
+
+void settings_dialog::on_pushButton_clicked()
+{
+    //handle radio buttons
+    settings_dialog_program_state->mutex.lock();
+    if(ui->action_picture_rb->isChecked())
+    {
+        settings_dialog_program_state->settings_state.action_on_motion = PICTURE;
+    }
+    else if (ui->action_video_rb->isChecked()) //redundant
+    {
+        settings_dialog_program_state->settings_state.action_on_motion = VIDEO;
+
+    }
+    settings_dialog_program_state->mutex.unlock();
+
+    this->close();
+}

@@ -20,6 +20,8 @@ public:
 private slots:
     void on_back_btn_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::settings_dialog *ui;
     program_state * settings_dialog_program_state;

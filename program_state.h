@@ -4,6 +4,12 @@
 #include <QMutex>
 #include <QString>
 
+typedef enum
+{
+    PICTURE,
+    VIDEO
+} motion_action;
+
 
 typedef struct settings //might be a good idea to make it thread safe. only these not the program state. because we only care about if the individual stuff is being used properly
 {
@@ -13,6 +19,7 @@ typedef struct settings //might be a good idea to make it thread safe. only thes
   int   bell_sound;
   int   movie_recording_number;
   int   picture_number;
+  motion_action   action_on_motion;
 
 }settings;
 
