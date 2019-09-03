@@ -27,6 +27,8 @@ private slots:
 
     void on_delete_btn_clicked();
 
+    void on_delete_all_pb_clicked();
+
 private:
     void populate_list();
     program_state *picture_gallery_program_state;

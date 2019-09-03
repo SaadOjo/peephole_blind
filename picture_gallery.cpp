@@ -69,24 +69,27 @@ void picture_gallery::on_delete_btn_clicked()
 
     QString picture_directory;
     picture_directory = QString::fromLocal8Bit(picture_gallery_program_state->settings_state.movie_recording_directory);
-    QString fn =   (ui->listWidget->currentItem())->text();
-    fn = picture_directory + fn;
-    qDebug() << "filetodeltete: " + fn;
 
+    if(ui->listWidget->count() != 0)
+    {
+        QString fn =   (ui->listWidget->currentItem())->text();
+        fn = picture_directory + fn;
+        qDebug() << "filetodeltete: " + fn;
 
-    char file_name[25];
-    memcpy( file_name, fn.toStdString().c_str() ,fn.size());
-    int status = remove(file_name);
+        char file_name[25];
+        memcpy( file_name, fn.toStdString().c_str() ,fn.size());
+        int status = remove(file_name);
 
-      if (status == 0)
-      {
-          printf("%s file deleted successfully.\n", file_name);
-      }
-      else
-      {
-        printf("Unable to delete the file\n");
-      }
-      populate_list();
+          if (status == 0)
+          {
+              printf("%s file deleted successfully.\n", file_name);
+          }
+          else
+          {
+            printf("Unable to delete the file\n");
+          }
+          populate_list();
+    }
       /*
     if (ret = QMessageBox::Yes)
     {
@@ -103,3 +106,36 @@ void picture_gallery::on_back_btn_clicked()
 
 
 
+
+void picture_gallery::on_delete_all_pb_clicked()
+{
+
+
+    QString picture_directory;
+    picture_directory = QString::fromLocal8Bit(picture_gallery_program_state->settings_state.movie_recording_directory);
+    int count_items = ui->listWidget->count();
+    printf("number of items in list are %d.\n", count_items);
+    char file_name[25];
+
+    for (int i = 0; i < count_items; i++)
+    {
+        QString fn =   ui->listWidget->item(i)->text();
+        fn = picture_directory + fn;
+        //qDebug() << "filetodeltete: " + fn;
+
+
+        memcpy( file_name, fn.toStdString().c_str() ,fn.size());
+        printf("file to be deleted is: %s.\n", file_name);
+        int status = remove(file_name);
+
+          if (status == 0)
+          {
+              printf("%s file deleted successfully.\n", file_name);
+          }
+          else
+          {
+            printf("Unable to delete the file\n");
+          }
+    }
+    populate_list();
+}

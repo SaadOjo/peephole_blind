@@ -29,6 +29,8 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void on_delete_all_pb_clicked();
+
 private:
     Ui::gallery_dialog *ui;
     program_state *gallery_dialog_program_state;
