@@ -20,6 +20,7 @@ typedef struct settings //might be a good idea to make it thread safe. only thes
   int   movie_recording_number;
   int   picture_number;
   motion_action   action_on_motion;
+  bool  motion_detection;
 
 }settings;
 

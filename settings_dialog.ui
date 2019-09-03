@@ -129,7 +129,7 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QCheckBox" name="checkBox">
+        <widget class="QCheckBox" name="motion_detection_checkbox">
          <property name="text">
           <string>Motion Detection</string>
          </property>

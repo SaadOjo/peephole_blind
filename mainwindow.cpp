@@ -38,6 +38,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //my_program_state.settings_state.movie_recording_directory = "/media/mmcblk0p1/recordings/";
     my_program_state.settings_state.movie_recording_directory = "./";
     my_program_state.settings_state.action_on_motion = PICTURE; //takes picture by default.
+    my_program_state.settings_state.motion_detection = true; //takes picture by default.
+
 
     my_program_state.settings_state.picture_directory = "./";
 
@@ -216,19 +218,26 @@ void MainWindow:: screen_pressed()
 
 void MainWindow:: motion_detected_slot()
 {
-    mybacklight.turn_on();
     my_program_state.mutex.lock();
-    switch(my_program_state.settings_state.action_on_motion)
+    if(my_program_state.settings_state.motion_detection)
     {
-    case PICTURE:
-        my_video_capture_thread->set_take_photos_flag();
-        break;
-    case VIDEO:
-        start_recording();
-        break;
+        mybacklight.turn_on();
+        switch(my_program_state.settings_state.action_on_motion)
+        {
+        case PICTURE:
+            my_video_capture_thread->set_take_photos_flag();
+            break;
+        case VIDEO:
+            start_recording();
+            break;
+        }
+        my_program_state.mutex.unlock();
+        display_on_timer.start();
     }
-    my_program_state.mutex.unlock();
-    display_on_timer.start();
+    else
+    {
+        my_program_state.mutex.unlock();
+    }
 }
 void MainWindow::start_recording()
 {
