@@ -56,6 +56,9 @@ private:
     movie_decoder_thread my_movie_decoder_thread;
     audio_playback_thread athread;
 
+    bool video_file_open_failed;
+
+
 };
 
 #endif // PLAYER_DIALOG_H

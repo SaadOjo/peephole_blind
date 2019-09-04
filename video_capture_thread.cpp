@@ -447,7 +447,7 @@ void video_capture_thread::run(){
         //usleep(1000000/10);
 
         //xioctl(fd, VIDIOC_QBUF, &buf);//BLIND
-        usleep(1000000/24); //NOT BLIND
+        usleep(1000000/12); //NOT BLIND
     }
 }
 void video_capture_thread::set_camera_color_space(enum color_space cspace)

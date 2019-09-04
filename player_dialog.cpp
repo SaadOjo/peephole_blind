@@ -9,8 +9,17 @@ player_dialog::player_dialog(QWidget *parent, program_state *my_program_state) :
     ui->setupUi(this);
     player_dialog_program_state =  my_program_state;
 
-    //here if thw function below return error then no neet to open this stuff. exit and pop a message. (error return already implemented)
-    my_movie_decoder_thread.setFilename(my_program_state->video_player_settings_state.recording_filename);
+    //here if thw function below return error then no need to open this stuff. exit and pop a message. (error return already implemented)
+    if(my_movie_decoder_thread.setFilename(my_program_state->video_player_settings_state.recording_filename) < 0)
+    {
+        fprintf(stderr,"This should infact close. \n");
+         video_file_open_failed = true;
+    }
+    else
+    {
+        video_file_open_failed = false;
+
+    }
 
 
     connect(this,SIGNAL(setImage(image_with_mutex*)),ui->videoplyr_pane ,SLOT(setPicture(image_with_mutex*)));
@@ -21,7 +30,7 @@ player_dialog::player_dialog(QWidget *parent, program_state *my_program_state) :
     connect(&my_movie_decoder_thread,SIGNAL(audio_capture_started(start_context*)),&athread,SLOT(act_on_audio_thread_start(start_context*)) , Qt::DirectConnection);
     connect(&my_movie_decoder_thread,SIGNAL(movie_stopped_signal()),&athread,SLOT(act_on_audio_thread_stop()) , Qt::DirectConnection);
 
-    QString fileName = "/nfs/index.png";
+    QString fileName = "./video_oynatci.png";
     image_with_mutex first_image;
     first_image.mutex.lock();
     qDebug() << fileName;
@@ -71,22 +80,29 @@ void player_dialog::on_pause_btn_clicked()
 
 void player_dialog::on_play_stop_btn_clicked()
 {
-
-    if(!video_playing)
+    if(video_file_open_failed)
     {
-        ui->play_stop_btn->setText("stop");
-        video_playing = true;
-
-        if(!my_movie_decoder_thread.isRunning())  //Play Video
-        {
-            my_movie_decoder_thread.startThread();
-        }
-        //audio thread is controlled by the movie decoder thread.
+        close();
     }
     else
     {
-        ui->play_stop_btn->setText("play");
-        my_movie_decoder_thread.stopThread();
+
+        if(!video_playing)
+        {
+            ui->play_stop_btn->setText("stop");
+            video_playing = true;
+
+            if(!my_movie_decoder_thread.isRunning())  //Play Video
+            {
+                my_movie_decoder_thread.startThread();
+            }
+            //audio thread is controlled by the movie decoder thread.
+        }
+        else
+        {
+            ui->play_stop_btn->setText("play");
+            my_movie_decoder_thread.stopThread();
+        }
     }
 
 }

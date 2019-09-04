@@ -22,10 +22,16 @@ movie_decoder_thread::movie_decoder_thread(QObject *parent) : QThread(parent)
     fmt_ctx = NULL;
     video_dec_ctx = NULL;
     audio_dec_ctx = NULL; //was not originally null
+
+
+    sws_ctx      = NULL;
+    swr_ctx      = NULL;
+
+
     video_stream = NULL;
     audio_stream = NULL;
     src_filename = NULL;
-    for(int i = i; i<4; i++)
+    for(int i = 0; i<4; i++)
     {
         video_dst_data[i] = NULL;
     }
@@ -39,10 +45,11 @@ movie_decoder_thread::movie_decoder_thread(QObject *parent) : QThread(parent)
     //picture rescaler variables
     rsc_pix_fmt = AV_PIX_FMT_RGB565;
     rsc_size = NULL;
+    rsc_data[0] = NULL;
 
     //audio resampler variables
     dst_ch_layout = AV_CH_LAYOUT_STEREO;
-    dst_data = NULL;
+    dst_data    = NULL;
 
     continue_loop = false;
     myQueue = new(safe_queue);
@@ -64,28 +71,66 @@ movie_decoder_thread::~movie_decoder_thread()
 
     delete myIWM;
 
+    /*
     avcodec_free_context(&video_dec_ctx);
     avcodec_free_context(&audio_dec_ctx);
     avformat_close_input(&fmt_ctx);
     av_frame_free(&frame);
     av_free(video_dst_data[0]);
+    */
+    if(video_dec_ctx)
+    {
+        avcodec_free_context(&video_dec_ctx);
+    }
+    if(audio_dec_ctx)
+    {
+        avcodec_free_context(&audio_dec_ctx);
+
+    }
+    if(fmt_ctx)
+    {
+        avformat_close_input(&fmt_ctx);
+
+    }
+    if(frame)
+    {
+        av_frame_free(&frame);
+
+    }
+    if(video_dst_data[0]!=NULL)
+    {
+        av_free(video_dst_data[0]);
+    }
+    qDebug() << "End from set deconstructor.\n";
+
 
     //free picture rescaler stuff if it has been initialized
     if(picture_rescaling_needed)
     {
-        av_freep(&rsc_data[0]);
-        sws_freeContext(sws_ctx);
+        if(rsc_data[0] !=NULL)
+        {
+            av_freep(&rsc_data[0]);
+        }if(sws_ctx)
+        {
+            sws_freeContext(sws_ctx);
+        }
     }
 
     if(audio_resampling_needed)
     {
-        if (dst_data) //will it work like this? (i guess yes because it was made null)
+        if (dst_data != NULL) //will it work like this? (i guess yes because it was made null)
         {
             av_freep(&dst_data[0]);
+            av_freep(&dst_data); //not best way, tried to appoint null to double ptr dst_data, couldnt
+
         }
-        av_freep(&dst_data);
-        swr_free(&swr_ctx);
+        if(swr_ctx)
+        {
+            swr_free(&swr_ctx);
+        }
     }
+
+
 
     fprintf(stderr,"Have reached the end of the deconstruction of thread. \n");
 
@@ -131,7 +176,9 @@ int movie_decoder_thread::setFilename(QString filename_string)
 
     filename = filename_string;
     qDebug() << "Filename is: " << filename << "\n";
-    src_filename = filename.toLatin1().constData();
+   // src_filename = filename.toLatin1().constData();
+    src_filename = (char*)malloc(32);
+    strcpy(src_filename,"no_name.mp4");
     fprintf(stderr, "source filename: %s\n", src_filename);
 
     /* open input file, and allocate format context */
@@ -190,7 +237,8 @@ int movie_decoder_thread::setFilename(QString filename_string)
      if(!video_stream && !audio_stream) //maybe over engineering here a bit.
      {
          //nothing to display
-         goto end;
+         goto end; //repeated remove aafter demo
+        //qDebug() << "In \n";
      }
 
     //Picture rescaler initialisation
@@ -335,12 +383,37 @@ end:
     //do we need to free resamplers and scalers here??
 
     //if anything fails, free stuff and notify the caller.
+    if(video_dec_ctx)
+    {
+        avcodec_free_context(&video_dec_ctx);
+    }
+    if(audio_dec_ctx)
+    {
+        avcodec_free_context(&audio_dec_ctx);
+
+    }
+    if(fmt_ctx)
+    {
+        avformat_close_input(&fmt_ctx);
+
+    }
+    if(frame)
+    {
+        av_frame_free(&frame);
+
+    }
+    if(video_dst_data[0]!=NULL)
+    {
+        av_free(video_dst_data[0]);
+    }
+    qDebug() << "End from set filenamee.\n";
+    /*
     avcodec_free_context(&video_dec_ctx);
     avcodec_free_context(&audio_dec_ctx);
     avformat_close_input(&fmt_ctx);
     av_frame_free(&frame);
     av_free(video_dst_data[0]);
-
+    */
     return -1; //failure
 
 
