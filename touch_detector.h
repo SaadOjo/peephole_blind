@@ -13,6 +13,7 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event);
 signals:
     void touch_detected_signal();
+    void touch_released_signal();
 };
 
 

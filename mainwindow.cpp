@@ -21,6 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     my_touch_detector = new touch_detector;
     qApp->installEventFilter(my_touch_detector);
     connect(my_touch_detector, SIGNAL(touch_detected_signal()), this, SLOT(screen_pressed()));
+    connect(my_touch_detector, SIGNAL(touch_released_signal()), this, SLOT(screen_released()));
+
 
 
     my_safe_encode_video_context.mutex.lock();
@@ -212,9 +214,19 @@ void MainWindow::recording_timeout()
 }
 void MainWindow:: screen_pressed()
 {
-    mybacklight.turn_on(); //problem is that screen will turnoff even if you press other buttons and not press video pane.
+    mybacklight.turn_on();
+    if(display_on_timer.isActive())
+    {
+        display_on_timer.stop();
+    }
+
+
+}
+void MainWindow:: screen_released()
+{
     display_on_timer.start();
 }
+
 
 void MainWindow:: motion_detected_slot()
 {

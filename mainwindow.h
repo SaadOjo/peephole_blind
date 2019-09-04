@@ -62,6 +62,9 @@ private slots:
 
     void screen_pressed();
 
+    void screen_released();
+
+
 
 private:
     Ui::MainWindow *ui;
