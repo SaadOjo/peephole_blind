@@ -57,16 +57,20 @@ void gallery_dialog::on_play_btn_clicked()
 {
 
    // QListWidgetItem *videoItem = (ui->listWidget->currentItem()).text();
-    QString fn =   (ui->listWidget->currentItem())->text();
-    qDebug() << fn;
-    QString video_directory;
-    video_directory = QString::fromLocal8Bit(gallery_dialog_program_state->settings_state.movie_recording_directory);
-    gallery_dialog_program_state->video_player_settings_state.recording_filename =  video_directory + fn; // + "/" + fn;
-    //gallery_dialog_program_state->video_player_settings_state.recording_filename =  "./" + fn;
-    player_dialog plr_diag(this,gallery_dialog_program_state);
-    plr_diag.setWindowState(Qt::WindowFullScreen);
-    plr_diag.exec();
-    qDebug() << "Returning from player!";
+    if(ui->listWidget->count() > 0)
+    {
+        QString fn =   (ui->listWidget->currentItem())->text();
+        qDebug() << fn;
+        QString video_directory;
+        video_directory = QString::fromLocal8Bit(gallery_dialog_program_state->settings_state.movie_recording_directory);
+        gallery_dialog_program_state->video_player_settings_state.recording_filename =  video_directory + fn; // + "/" + fn;
+        //gallery_dialog_program_state->video_player_settings_state.recording_filename =  "./" + fn;
+        player_dialog plr_diag(this,gallery_dialog_program_state);
+        plr_diag.setWindowState(Qt::WindowFullScreen);
+        plr_diag.exec();
+        qDebug() << "Returning from player!";
+    }
+
 
 }
 
