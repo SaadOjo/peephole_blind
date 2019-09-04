@@ -13,12 +13,15 @@ picture_dialog::picture_dialog(QWidget *parent,program_state *my_program_state) 
 
     //QString fileName = "index.png";
     QString fileName =  picture_dialog_program_state->picture_dialog_settings_state.picture_filename;
+
     image_with_mutex first_image; //this might cause seg faults
     first_image.mutex.lock();
     qDebug() << fileName;
     first_image.image = new QImage(fileName);
     first_image.mutex.unlock();
     emit setImage(&first_image);
+
+
 }
 
 picture_dialog::~picture_dialog()

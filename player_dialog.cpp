@@ -10,7 +10,11 @@ player_dialog::player_dialog(QWidget *parent, program_state *my_program_state) :
     player_dialog_program_state =  my_program_state;
 
     //here if thw function below return error then no need to open this stuff. exit and pop a message. (error return already implemented)
-    if(my_movie_decoder_thread.setFilename(my_program_state->video_player_settings_state.recording_filename) < 0)
+    int ret = my_movie_decoder_thread.setFilename(my_program_state->video_player_settings_state.recording_filename);
+
+    fprintf(stderr,"The value returned from set filename is %d. \n", ret);
+
+    if(ret < 0)
     {
         fprintf(stderr,"This should infact close. \n");
          video_file_open_failed = true;

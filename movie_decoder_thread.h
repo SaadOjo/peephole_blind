@@ -103,7 +103,7 @@ private:
      int                  width, height;
      enum AVPixelFormat   pix_fmt;
      AVStream             *video_stream, *audio_stream;
-     char                 *src_filename; //changed from const char
+     const char                 *src_filename;
      uint8_t              *video_dst_data[4];
      int                  video_dst_linesize[4];
      int                  video_dst_bufsize;

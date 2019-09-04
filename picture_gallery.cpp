@@ -47,6 +47,8 @@ void picture_gallery::populate_list()
 void picture_gallery::on_play_btn_clicked()
 {
     // QListWidgetItem *videoItem = (ui->listWidget->currentItem()).text();
+    if(ui->listWidget->count() > 0)
+    {
      QString fn =   (ui->listWidget->currentItem())->text();
      qDebug() << fn;
      QString picture_directory; //should use mutexes
@@ -56,6 +58,7 @@ void picture_gallery::on_play_btn_clicked()
      pic_diag.setWindowState(Qt::WindowFullScreen);
      pic_diag.exec();
      qDebug() << "Returning from picture shower!";
+    }
 }
 void picture_gallery::on_delete_btn_clicked()
 {

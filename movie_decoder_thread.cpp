@@ -101,7 +101,7 @@ movie_decoder_thread::~movie_decoder_thread()
     {
         av_free(video_dst_data[0]);
     }
-    qDebug() << "End from set deconstructor.\n";
+    qDebug() << "End from decoder thread deconstructor.\n";
 
 
     //free picture rescaler stuff if it has been initialized
@@ -176,9 +176,9 @@ int movie_decoder_thread::setFilename(QString filename_string)
 
     filename = filename_string;
     qDebug() << "Filename is: " << filename << "\n";
-   // src_filename = filename.toLatin1().constData();
-    src_filename = (char*)malloc(32);
-    strcpy(src_filename,"no_name.mp4");
+    src_filename = filename.toLatin1().constData();
+    //src_filename = (char*)malloc(32); //need to change type to char for this test code
+    //strcpy(src_filename,"no_name.mp4");
     fprintf(stderr, "source filename: %s\n", src_filename);
 
     /* open input file, and allocate format context */
@@ -234,13 +234,6 @@ int movie_decoder_thread::setFilename(QString filename_string)
     pkt.data = NULL;
     pkt.size = 0;
 
-     if(!video_stream && !audio_stream) //maybe over engineering here a bit.
-     {
-         //nothing to display
-         goto end; //repeated remove aafter demo
-        //qDebug() << "In \n";
-     }
-
     //Picture rescaler initialisation
     //do this if there is a need for conversion.
     /* create scaling context */
@@ -251,6 +244,10 @@ int movie_decoder_thread::setFilename(QString filename_string)
     if(rsc_w!=width || rsc_h!=height || pix_fmt!=rsc_pix_fmt)
     {
         picture_rescaling_needed = true;
+
+        sws_ctx = sws_getContext(width, height, pix_fmt,
+                                 rsc_w, rsc_h, rsc_pix_fmt,
+                                 SWS_BILINEAR, NULL, NULL, NULL);
 
         if (!sws_ctx)
         {
@@ -271,9 +268,7 @@ int movie_decoder_thread::setFilename(QString filename_string)
         }
         rsc_bufsize = ret;
 
-        sws_ctx = sws_getContext(width, height, pix_fmt,
-                                 rsc_w, rsc_h, rsc_pix_fmt,
-                                 SWS_BILINEAR, NULL, NULL, NULL);
+
     }
     else
     {
@@ -380,6 +375,8 @@ resampler_fail_end:
     av_freep(&dst_data);
     swr_free(&swr_ctx);
 end:
+    qDebug() << "Start of end kkx.\n";
+
     //do we need to free resamplers and scalers here??
 
     //if anything fails, free stuff and notify the caller.
