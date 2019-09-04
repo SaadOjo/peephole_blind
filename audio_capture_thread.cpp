@@ -154,8 +154,8 @@ void audio_capture_thread::run(){
             short left, right;
             left  = frame[i*4    ] | frame[i*4 + 1] << 8;
             right = frame[i*4 + 2] | frame[i*4 + 3] << 8;
-            left = left*3;
-            right = right*3;
+            left = left*5;
+            right = right*5;
 
             frame[i*4    ] = left;
             frame[i*4 + 1] = left>>8;
